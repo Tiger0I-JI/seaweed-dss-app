@@ -153,7 +153,7 @@ const saveEvaluation = async () => {
 
     resetForm()
     fetchEvaluations()
-  } catch (err) { alert('Error saving data') }
+ } catch (err) { alert('Error details: ' + (err.message || JSON.stringify(err))) }
 }
 
 const fetchEvaluations = async () => {
