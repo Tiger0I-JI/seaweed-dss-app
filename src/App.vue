@@ -229,7 +229,7 @@ const resetForm = () => {
           <th style="padding: 12px; text-align: center; font-weight: 600;">Workforce (Workers)</th>
           <th style="padding: 12px; text-align: center; font-weight: 600;">Investment Cost (THB)</th>
           <th style="padding: 12px; text-align: center; font-weight: 600;">Space (m²)</th>
-          <th style="padding: 12px; text-align: center; font-weight: 600; border-top-right-radius: 8px;">Capacity (~Units)</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600; border-top-right-radius: 8px;">Capacity (~Units/Month)</th>
         </tr>
       </thead>
       <tbody>
@@ -238,28 +238,28 @@ const resetForm = () => {
           <td style="padding: 12px; text-align: center; color: #475569;">6</td>
           <td style="padding: 12px; text-align: center; color: #475569;">90,000</td>
           <td style="padding: 12px; text-align: center; color: #475569;">30</td>
-          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~6,000</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f1f5f9;">
-          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Machine-Oriented Configuration</td>
-          <td style="padding: 12px; text-align: center; color: #475569;">4</td>
-          <td style="padding: 12px; text-align: center; color: #475569;">450,000</td>
-          <td style="padding: 12px; text-align: center; color: #475569;">80</td>
-          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~35,000</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~5,000</td>
         </tr>
         <tr style="border-bottom: 1px solid #f1f5f9;">
           <td style="padding: 12px; font-weight: 500; color: #1e293b;">Space-Efficient Layout Configuration</td>
           <td style="padding: 12px; text-align: center; color: #475569;">5</td>
           <td style="padding: 12px; text-align: center; color: #475569;">250,000</td>
           <td style="padding: 12px; text-align: center; color: #475569;">40</td>
-          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~20,000</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~15,000</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Machine-Oriented Configuration</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">4</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">450,000</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">80</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~30,000</td>
         </tr>
         <tr>
           <td style="padding: 12px; font-weight: 500; color: #1e293b;">Flexible Manufacturing Configuration</td>
           <td style="padding: 12px; text-align: center; color: #475569;">8</td>
           <td style="padding: 12px; text-align: center; color: #475569;">1,200,000</td>
           <td style="padding: 12px; text-align: center; color: #475569;">150</td>
-          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~100,000</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~45,000</td>
         </tr>
       </tbody>
     </table>
