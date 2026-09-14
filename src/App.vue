@@ -207,76 +207,59 @@ const resetForm = () => {
       <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
     </header>
 <!-- Factory Alternatives Baseline Specifications Card -->
-<div class="my-8 bg-white rounded-2xl shadow-xl border border-indigo-50 overflow-hidden transition-all duration-300">
-  
-  <!-- Gradient Header -->
-  <div class="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-    <div>
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🏭</span>
-        <h3 class="text-xl font-bold tracking-wide">Factory Alternatives Baseline Specifications</h3>
-      </div>
-      <p class="text-slate-300 text-sm mt-1">Baseline operational parameters for the four alternative production configurations.</p>
-    </div>
-    
-    <!-- Status Badge -->
-    <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/30 shadow-inner">
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
+      <span>🏭</span> Factory Alternatives Baseline Specifications
+    </h2>
+    <span style="background-color: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #fde68a;">
       ⚠️ Demo Data (Awaiting Simulation Updates)
     </span>
   </div>
+  
+  <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 16px;">
+    Baseline operational parameters for the four alternative production configurations.
+  </p>
 
-  <!-- Table Container -->
-  <div class="p-6 overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-100 text-sm">
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
       <thead>
-        <tr class="text-left text-slate-500 uppercase tracking-wider text-xs font-semibold bg-slate-50/70">
-          <th class="px-6 py-4 rounded-l-xl">Configuration Name</th>
-          <th class="px-6 py-4 text-center">Workforce (Workers)</th>
-          <th class="px-6 py-4 text-center">Investment Cost (THB)</th>
-          <th class="px-6 py-4 text-center">Space (m²)</th>
-          <th class="px-6 py-4 text-center rounded-r-xl">Capacity (~Units)</th>
+        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+          <th style="padding: 12px; font-weight: 600; border-top-left-radius: 8px;">Configuration Name</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600;">Workforce (Workers)</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600;">Investment Cost (THB)</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600;">Space (m²)</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600; border-top-right-radius: 8px;">Capacity (~Units)</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-slate-100 bg-white">
-        <tr class="hover:bg-indigo-50/40 transition-colors">
-          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            Labor-Oriented Configuration
-          </td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">6</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">90,000</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">30</td>
-          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~6,000</td>
+      <tbody>
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Labor-Oriented Configuration</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">6</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">90,000</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">30</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~6,000</td>
         </tr>
-        <tr class="hover:bg-indigo-50/40 transition-colors">
-          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            Machine-Oriented Configuration
-          </td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">4</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">450,000</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">80</td>
-          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~35,000</td>
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Machine-Oriented Configuration</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">4</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">450,000</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">80</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~35,000</td>
         </tr>
-        <tr class="hover:bg-indigo-50/40 transition-colors">
-          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            Space-Efficient Layout Configuration
-          </td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">5</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">250,000</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">40</td>
-          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~20,000</td>
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Space-Efficient Layout Configuration</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">5</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">250,000</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">40</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~20,000</td>
         </tr>
-        <tr class="hover:bg-indigo-50/40 transition-colors">
-          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            Flexible Manufacturing Configuration
-          </td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">8</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">1,200,000</td>
-          <td class="px-6 py-4 text-center text-slate-600 font-medium">150</td>
-          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~100,000</td>
+        <tr>
+          <td style="padding: 12px; font-weight: 500; color: #1e293b;">Flexible Manufacturing Configuration</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">8</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">1,200,000</td>
+          <td style="padding: 12px; text-align: center; color: #475569;">150</td>
+          <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~100,000</td>
         </tr>
       </tbody>
     </table>
