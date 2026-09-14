@@ -206,7 +206,64 @@ const resetForm = () => {
       <h1>Seaweed Snack Production: DSS Configuration</h1>
       <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
     </header>
+<!-- Factory Alternatives Baseline Table / Cards -->
+<div class="my-6 p-6 bg-white rounded-xl shadow-md border border-gray-100">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+    <div>
+      <h3 class="text-lg font-bold text-gray-800">🏭 Factory Alternatives Baseline Specifications</h3>
+      <p class="text-sm text-gray-500">Baseline parameters for the four alternative production configurations.</p>
+    </div>
+    <!-- Status Disclaimer Badge -->
+    <span class="mt-2 md:mt-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+      ⚠️ Demo Data (Awaiting actual simulation updates)
+    </span>
+  </div>
 
+  <!-- Table View -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold text-gray-700">Configuration Name</th>
+          <th class="px-4 py-3 text-center font-semibold text-gray-700">Workforce (Workers)</th>
+          <th class="px-4 py-3 text-center font-semibold text-gray-700">Investment Cost (THB)</th>
+          <th class="px-4 py-3 text-center font-semibold text-gray-700">Space (m²)</th>
+          <th class="px-4 py-3 text-center font-semibold text-gray-700">Capacity (~Units)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 bg-white">
+        <tr>
+          <td class="px-4 py-3 font-medium text-gray-900">Labor-Oriented Configuration</td>
+          <td class="px-4 py-3 text-center">6</td>
+          <td class="px-4 py-3 text-center">90,000</td>
+          <td class="px-4 py-3 text-center">30</td>
+          <td class="px-4 py-3 text-center">~6,000</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-3 font-medium text-gray-900">Machine-Oriented Configuration</td>
+          <td class="px-4 py-3 text-center">4</td>
+          <td class="px-4 py-3 text-center">450,000</td>
+          <td class="px-4 py-3 text-center">80</td>
+          <td class="px-4 py-3 text-center">~35,000</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-3 font-medium text-gray-900">Space-Efficient Layout Configuration</td>
+          <td class="px-4 py-3 text-center">5</td>
+          <td class="px-4 py-3 text-center">250,000</td>
+          <td class="px-4 py-3 text-center">40</td>
+          <td class="px-4 py-3 text-center">~20,000</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-3 font-medium text-gray-900">Flexible Manufacturing Configuration</td>
+          <td class="px-4 py-3 text-center">8</td>
+          <td class="px-4 py-3 text-center">1,200,000</td>
+          <td class="px-4 py-3 text-center">150</td>
+          <td class="px-4 py-3 text-center">~100,000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
     <div class="card form-card">
       <div class="card-header">
         <h2>{{ editingId ? 'Edit System Configuration' : 'Input Constraints & Preferences' }}</h2>
