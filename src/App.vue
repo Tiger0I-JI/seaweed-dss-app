@@ -206,59 +206,77 @@ const resetForm = () => {
       <h1>Seaweed Snack Production: DSS Configuration</h1>
       <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
     </header>
-<!-- Factory Alternatives Baseline Table / Cards -->
-<div class="my-6 p-6 bg-white rounded-xl shadow-md border border-gray-100">
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+<!-- Factory Alternatives Baseline Specifications Card -->
+<div class="my-8 bg-white rounded-2xl shadow-xl border border-indigo-50 overflow-hidden transition-all duration-300">
+  
+  <!-- Gradient Header -->
+  <div class="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
-      <h3 class="text-lg font-bold text-gray-800">🏭 Factory Alternatives Baseline Specifications</h3>
-      <p class="text-sm text-gray-500">Baseline parameters for the four alternative production configurations.</p>
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🏭</span>
+        <h3 class="text-xl font-bold tracking-wide">Factory Alternatives Baseline Specifications</h3>
+      </div>
+      <p class="text-slate-300 text-sm mt-1">Baseline operational parameters for the four alternative production configurations.</p>
     </div>
-    <!-- Status Disclaimer Badge -->
-    <span class="mt-2 md:mt-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-      ⚠️ Demo Data (Awaiting actual simulation updates)
+    
+    <!-- Status Badge -->
+    <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/30 shadow-inner">
+      ⚠️ Demo Data (Awaiting Simulation Updates)
     </span>
   </div>
 
-  <!-- Table View -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left font-semibold text-gray-700">Configuration Name</th>
-          <th class="px-4 py-3 text-center font-semibold text-gray-700">Workforce (Workers)</th>
-          <th class="px-4 py-3 text-center font-semibold text-gray-700">Investment Cost (THB)</th>
-          <th class="px-4 py-3 text-center font-semibold text-gray-700">Space (m²)</th>
-          <th class="px-4 py-3 text-center font-semibold text-gray-700">Capacity (~Units)</th>
+  <!-- Table Container -->
+  <div class="p-6 overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-100 text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 uppercase tracking-wider text-xs font-semibold bg-slate-50/70">
+          <th class="px-6 py-4 rounded-l-xl">Configuration Name</th>
+          <th class="px-6 py-4 text-center">Workforce (Workers)</th>
+          <th class="px-6 py-4 text-center">Investment Cost (THB)</th>
+          <th class="px-6 py-4 text-center">Space (m²)</th>
+          <th class="px-6 py-4 text-center rounded-r-xl">Capacity (~Units)</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
-        <tr>
-          <td class="px-4 py-3 font-medium text-gray-900">Labor-Oriented Configuration</td>
-          <td class="px-4 py-3 text-center">6</td>
-          <td class="px-4 py-3 text-center">90,000</td>
-          <td class="px-4 py-3 text-center">30</td>
-          <td class="px-4 py-3 text-center">~6,000</td>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <tr class="hover:bg-indigo-50/40 transition-colors">
+          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Labor-Oriented Configuration
+          </td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">6</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">90,000</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">30</td>
+          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~6,000</td>
         </tr>
-        <tr>
-          <td class="px-4 py-3 font-medium text-gray-900">Machine-Oriented Configuration</td>
-          <td class="px-4 py-3 text-center">4</td>
-          <td class="px-4 py-3 text-center">450,000</td>
-          <td class="px-4 py-3 text-center">80</td>
-          <td class="px-4 py-3 text-center">~35,000</td>
+        <tr class="hover:bg-indigo-50/40 transition-colors">
+          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Machine-Oriented Configuration
+          </td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">4</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">450,000</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">80</td>
+          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~35,000</td>
         </tr>
-        <tr>
-          <td class="px-4 py-3 font-medium text-gray-900">Space-Efficient Layout Configuration</td>
-          <td class="px-4 py-3 text-center">5</td>
-          <td class="px-4 py-3 text-center">250,000</td>
-          <td class="px-4 py-3 text-center">40</td>
-          <td class="px-4 py-3 text-center">~20,000</td>
+        <tr class="hover:bg-indigo-50/40 transition-colors">
+          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Space-Efficient Layout Configuration
+          </td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">5</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">250,000</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">40</td>
+          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~20,000</td>
         </tr>
-        <tr>
-          <td class="px-4 py-3 font-medium text-gray-900">Flexible Manufacturing Configuration</td>
-          <td class="px-4 py-3 text-center">8</td>
-          <td class="px-4 py-3 text-center">1,200,000</td>
-          <td class="px-4 py-3 text-center">150</td>
-          <td class="px-4 py-3 text-center">~100,000</td>
+        <tr class="hover:bg-indigo-50/40 transition-colors">
+          <td class="px-6 py-4 font-semibold text-slate-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            Flexible Manufacturing Configuration
+          </td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">8</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">1,200,000</td>
+          <td class="px-6 py-4 text-center text-slate-600 font-medium">150</td>
+          <td class="px-6 py-4 text-center text-indigo-600 font-bold">~100,000</td>
         </tr>
       </tbody>
     </table>
