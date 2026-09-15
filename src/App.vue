@@ -13,6 +13,10 @@ const form = ref({
   weight_capacity: 5
 })
 
+
+// Interactive Sensitivity Slider State
+const sensitivityProfitWeight = ref(4)
+  
 const evaluations = ref([])
 const editingId = ref(null)
 
@@ -671,35 +675,49 @@ const getSensitivityResult = (weights) => {
 
     <!-- 5. Interactive Sensitivity Analysis Modal -->
     <div v-if="showSensitivityModal" class="modal-overlay" @click.self="showSensitivityModal = false">
-      <div class="modal-content" style="max-width: 700px; width: 95%;">
+      <div class="modal-content" style="max-width: 750px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0;">📈 Interactive Sensitivity Analysis (Weight Perturbation)</h3>
+          <h3 style="margin: 0;">📈 Interactive Sensitivity Analysis (Live Weight Perturbation)</h3>
           <button @click="showSensitivityModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
         </div>
         
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-          <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
-            Evaluating how the optimal recommendation shifts when the importance of profit weight changes under your current resource constraints.
+        <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+          <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">
+            Drag the slider below to dynamically adjust the <strong>Profit Weight</strong> and observe how the TOPSIS scores (Ci) and alternative rankings shift in real-time.
           </p>
+
+          <!-- Interactive Slider Control -->
+          <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-weight: 600; font-size: 14px; color: #1e293b;">Adjust Profit Weight (W_profit):</label>
+              <span style="background: #4f46e5; color: white; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">
+                {{ sensitivityProfitWeight }} / 5
+              </span>
+            </div>
+            <input type="range" min="1" max="5" step="1" v-model.number="sensitivityProfitWeight" style="width: 100%; cursor: pointer;" />
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-top: 4px;">
+              <span>1 (Low Importance)</span>
+              <span>5 (Maximum Importance)</span>
+            </div>
+          </div>
+
+          <!-- Live Ranking Results based on Slider -->
+          <h4 style="color: #1e293b; margin-bottom: 12px;">Live Evaluation Results for W_profit = {{ sensitivityProfitWeight }}</h4>
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div v-for="scen in sensitivityScenarios" :key="scen.label" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div v-for="(item, index) in runConstraintScreeningAndTopsis({ profit: sensitivityProfitWeight, cost: form.weight_cost, space: form.weight_space, capacity: form.weight_capacity }).rankings" :key="item.name" style="background: #ffffff; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <strong>{{ scen.label }}</strong>
-                <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Cost: {{ scen.weights.cost }}, Space: {{ scen.weights.space }}, Capacity: {{ scen.weights.capacity }}</p>
+                <span style="font-weight: 600; color: #1e293b; font-size: 14px;">{{ index + 1 }}. {{ item.name }}</span>
               </div>
               <div style="text-align: right;">
-                <span style="font-size: 12px; background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 12px; font-weight: 600;">
-                  Best: {{ getSensitivityResult(scen.weights) }}
-                </span>
+                <span style="font-weight: 700; color: #4f46e5; font-size: 14px;">Ci = {{ item.score.toFixed(4) }}</span>
+                <span style="font-size: 11px; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 600;">Rank #{{ index + 1 }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="modal-actions" style="margin-top: 16px;">
+        <div class="modal-actions" style="margin-top: 20px;">
           <button class="btn btn-secondary" @click="showSensitivityModal = false" style="width: 100%;">Close Sensitivity Analysis</button>
         </div>
       </div>
     </div>
-  </div>
-</template>
