@@ -52,7 +52,7 @@ const alternatives = [
   { name: 'Flexible Manufacturing Configuration', labor: 8,  cost: 1200000, space: 150, capacity: 45000, criteria: [90000, 1200000, 150, 10000] }
 ]
 
-// Preset Scenarios Applicator
+// Preset Scenarios Applicator (Row 1)
 const applyPreset = (type) => {
   if (type === 'balanced') {
     form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
@@ -62,6 +62,21 @@ const applyPreset = (type) => {
     form.value = { budget: 5000000, labor: 30, space: 200, target_capacity: 30000, weight_profit: 5, weight_cost: 2, weight_space: 2, weight_capacity: 5 }
   }
   triggerToast('Preset scenario applied successfully!', 'info')
+}
+
+// Alternative Focus Preset Applicator (Row 2)
+const applyAlternativePreset = (alt) => {
+  form.value = {
+    budget: alt.cost + 100000,
+    labor: Math.max(alt.labor + 2, 8),
+    space: alt.space + 20,
+    target_capacity: alt.capacity,
+    weight_profit: 4,
+    weight_cost: 4,
+    weight_space: 3,
+    weight_capacity: 5
+  }
+  triggerToast(`Loaded profile to target: ${alt.name.replace(' Configuration', '')}`, 'info')
 }
 
 // Smart Badge Helper
@@ -429,13 +444,26 @@ const resetForm = () => {
 
     <!-- Input Constraints & Preferences Card -->
     <div class="card form-card no-print">
-      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
         <h2>{{ editingId ? 'Edit System Configuration' : 'Input Constraints & Preferences' }}</h2>
-        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-          <span style="font-size: 12px; color: #64748b; font-weight: 600;">Quick Presets:</span>
-          <button @click="applyPreset('balanced')" style="background: #e0e7ff; color: #3730a3; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">⚖️ Balanced</button>
-          <button @click="applyPreset('startup')" style="background: #dcfce7; color: #166534; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🌱 Startup</button>
-          <button @click="applyPreset('mass')" style="background: #fef3c7; color: #92400e; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🚀 Mass Prod</button>
+        
+        <!-- Two Rows of Presets -->
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+          <!-- Row 1: General Scenarios -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick Presets:</span>
+            <button @click="applyPreset('balanced')" style="background: #e0e7ff; color: #3730a3; border: none; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">⚖️ Balanced</button>
+            <button @click="applyPreset('startup')" style="background: #dcfce7; color: #166534; border: none; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">🌱 Startup</button>
+            <button @click="applyPreset('mass')" style="background: #fef3c7; color: #92400e; border: none; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">🚀 Mass Prod</button>
+          </div>
+          <!-- Row 2: Alternative Focus Presets -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Focus Alternative:</span>
+            <button @click="applyAlternativePreset(alternatives[0])" style="background: #f1f5f9; color: #166534; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">👷 Labor</button>
+            <button @click="applyAlternativePreset(alternatives[1])" style="background: #f1f5f9; color: #92400e; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">⚙️ Machine</button>
+            <button @click="applyAlternativePreset(alternatives[2])" style="background: #f1f5f9; color: #0369a1; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">📐 Space</button>
+            <button @click="applyAlternativePreset(alternatives[3])" style="background: #f1f5f9; color: #5b21b6; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer;">🌟 Flexible</button>
+          </div>
         </div>
       </div>
       
