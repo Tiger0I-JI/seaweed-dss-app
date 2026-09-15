@@ -318,19 +318,6 @@ const deleteEvaluation = async (id) => {
   }
 }
 
-const clearAllEvaluations = async () => {
-  if (!confirm('Are you sure you want to clear all evaluation records?')) return
-  try {
-    for (const item of evaluations.value) {
-      await supabase.from('evaluations').delete().eq('id', item.id)
-    }
-    fetchEvaluations()
-    triggerToast('All evaluation history cleared', 'success')
-  } catch (err) { 
-    triggerToast('Error clearing records', 'error') 
-  }
-}
-
 const viewDetails = (item) => {
   selectedRecord.value = item
   showDetailModal.value = true
@@ -347,7 +334,6 @@ const loadRecordToDashboard = (item) => {
     weight_space: 3,
     weight_capacity: 5
   }
-  // Run engine to update dashboard live ranking bars immediately
   const res = runConstraintScreeningAndTopsis()
   latestResult.value = {
     config: item.recommended_config,
@@ -391,11 +377,10 @@ const resetForm = () => {
       <span>{{ toast.message }}</span>
     </div>
 
-    <header class="header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div>
-        <h1>Seaweed Snack Production: DSS Configuration</h1>
-        <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
-      </div>
+    <!-- Centered Header -->
+    <header class="header" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; margin-bottom: 24px;">
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: #1e293b; margin: 0;">Seaweed Snack Production: DSS Configuration</h1>
+      <p style="font-size: 1rem; color: #64748b; margin: 0;">Constraint Screening & True Euclidean TOPSIS Ranking</p>
     </header>
 
     <!-- Factory Alternatives Baseline Specifications Card -->
@@ -606,9 +591,6 @@ const resetForm = () => {
     <div class="card no-print">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0;">Evaluation Records (Latest 5)</h2>
-        <button v-if="evaluations.length > 0" @click="clearAllEvaluations" style="background: #fee2e2; color: #991b1b; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
-          Clear History
-        </button>
       </div>
       <div class="table-responsive">
         <table class="data-table">
@@ -672,63 +654,66 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- 2. Detail Popup Modal (Used for Viewing Complete Historical Breakdown & Reloading) -->
+    <!-- 2. Detail Popup Modal (Enlarged Fonts & Better Proportions) -->
     <div v-if="showDetailModal" class="modal-overlay printable-modal-overlay" @click.self="closeDetailModal">
-      <div class="modal-content printable-modal-content" style="max-width: 650px; width: 95%; max-height: 80vh; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" class="no-print">
-          <h3 style="margin: 0;">Evaluation Record Details & Rankings</h3>
-          <button @click="closeDetailModal" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+      <div class="modal-content printable-modal-content" style="max-width: 720px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1e293b;">Evaluation Record Details & Rankings</h3>
+          <button @click="closeDetailModal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
         </div>
 
         <!-- Print-only Formal Header -->
-        <div class="print-only-title" style="display: none; margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 8px;">
-          <h2 style="margin: 0; font-size: 18px; color: #1e293b;">Seaweed Snack Production Technology Licensing DSS</h2>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">Official Evaluation & TOPSIS Decision Report</p>
+        <div class="print-only-title" style="display: none; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+          <h2 style="margin: 0; font-size: 20px; color: #1e293b;">Seaweed Snack Production Technology Licensing DSS</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Official Evaluation & TOPSIS Decision Report</p>
         </div>
 
-        <div v-if="selectedRecord" class="modal-body">
-          <div style="margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px; font-weight: bold;">1. Input Resource Constraints Snapshot</h4>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 12px; color: #475569;">
-              <p style="margin: 0;"><strong>Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
-              <p style="margin: 0;"><strong>Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
-              <p style="margin: 0;"><strong>Space:</strong> {{ selectedRecord.space }} m²</p>
-              <p style="margin: 0;"><strong>Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
+        <div v-if="selectedRecord" class="modal-body" style="font-size: 14px; display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- Section 1: Snapshot -->
+          <div style="background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; color: #334155;">
+              <p style="margin: 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
+              <p style="margin: 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
+              <p style="margin: 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</p>
+              <p style="margin: 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
             </div>
-            <p style="font-size: 11px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+            <p style="font-size: 12px; color: #64748b; margin-top: 10px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
-          <div style="margin-bottom: 16px;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px; font-weight: bold;">2. Final Decision Recommendation</h4>
-            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
-          </div>
-
-          <!-- Full Ranking Table Inside View Modal -->
+          <!-- Section 2: Recommendation -->
           <div>
-            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 8px; font-weight: bold;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings for this Record</h4>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">2. Final Decision Recommendation</h4>
+            <p style="font-size: 15px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
+          </div>
+
+          <!-- Section 3: Rankings Table -->
+          <div>
+            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings for this Record</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
               <thead>
-                <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
-                  <th style="padding: 6px;">Rank</th>
-                  <th style="padding: 6px;">Alternative Configuration</th>
-                  <th style="padding: 6px; text-align: right;">Ci Score</th>
+                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                  <th style="padding: 10px;">Rank</th>
+                  <th style="padding: 10px;">Alternative Configuration</th>
+                  <th style="padding: 10px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(r, idx) in calculateRecordRankings(selectedRecord.budget, selectedRecord.labor, selectedRecord.space)" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 6px; font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td style="padding: 6px;">{{ r.name }}</td>
-                  <td style="padding: 6px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                  <td style="padding: 10px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 10px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white;">📥 Load to Dashboard</button>
-          <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none;">🖨️ Print</button>
-          <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1;">Close</button>
+        <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white; padding: 10px; font-weight: 600;">📥 Load to Dashboard</button>
+          <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print</button>
+          <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1; padding: 10px;">Close</button>
         </div>
       </div>
     </div>
