@@ -536,7 +536,7 @@ const exportReport = () => {
       </div>
     </div>
 
-    <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
+   <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
     <div v-if="showMatrixModal" class="modal-overlay" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 800px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -550,7 +550,7 @@ const exportReport = () => {
           </p>
 
           <div v-if="latestResult.steps && latestResult.steps.weighted && latestResult.steps.weighted.length > 0">
-            <h4 style="color: #1e293b; margin-bottom: 8px;">1. Weighted Normalized Decision Matrix ($v_{ij}$)</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">1. Weighted Normalized Decision Matrix (v_ij)</h4>
             <div style="overflow-x: auto; margin-bottom: 20px;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
                 <thead>
@@ -574,21 +574,21 @@ const exportReport = () => {
               </table>
             </div>
 
-            <h4 style="color: #1e293b; margin-bottom: 8px;">2. Ideal Best ($A^+$) and Ideal Worst ($A^-$) Solutions</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">2. Ideal Best (A+) and Ideal Worst (A-) Solutions</h4>
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px;">
-              <p><strong>$A^+$ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
-              <p style="margin-top: 6px;"><strong>$A^-$ (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
+              <p><strong>A+ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
+              <p style="margin-top: 6px;"><strong>A- (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
             </div>
 
-            <h4 style="color: #1e293b; margin-bottom: 8px;">3. Euclidean Separation Measures & Closeness Coefficients ($C_i$)</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">3. Euclidean Separation Measures & Closeness Coefficients (Ci)</h4>
             <div style="overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
                     <th style="padding: 8px;">Alternative</th>
-                    <th style="padding: 8px; text-align: center;">$S_i^+$ (Distance to Best)</th>
-                    <th style="padding: 8px; text-align: center;">$S_i^-$ (Distance to Worst)</th>
-                    <th style="padding: 8px; text-align: center;">$C_i$ Score</th>
+                    <th style="padding: 8px; text-align: center;">Si+ (Distance to Best)</th>
+                    <th style="padding: 8px; text-align: center;">Si- (Distance to Worst)</th>
+                    <th style="padding: 8px; text-align: center;">Ci Score</th>
                   </tr>
                 </thead>
                 <tbody>
