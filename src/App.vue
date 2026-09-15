@@ -64,19 +64,28 @@ const applyPreset = (type) => {
   triggerToast('Preset scenario applied successfully!', 'info')
 }
 
-// Alternative Focus Preset Applicator (Row 2)
+// Smart Alternative Focus Preset Applicator (Row 2 - Adjusts both resources & business weights)
 const applyAlternativePreset = (alt) => {
+  let weights = { weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
+  
+  if (alt.name.includes('Labor')) {
+    weights = { weight_profit: 3, weight_cost: 5, weight_space: 3, weight_capacity: 3 }
+  } else if (alt.name.includes('Machine')) {
+    weights = { weight_profit: 5, weight_cost: 2, weight_space: 2, weight_capacity: 5 }
+  } else if (alt.name.includes('Space-Efficient')) {
+    weights = { weight_profit: 3, weight_cost: 4, weight_space: 5, weight_capacity: 3 }
+  } else if (alt.name.includes('Flexible')) {
+    weights = { weight_profit: 5, weight_cost: 1, weight_space: 1, weight_capacity: 5 }
+  }
+
   form.value = {
     budget: alt.cost + 100000,
     labor: Math.max(alt.labor + 2, 8),
     space: alt.space + 20,
     target_capacity: alt.capacity,
-    weight_profit: 4,
-    weight_cost: 4,
-    weight_space: 3,
-    weight_capacity: 5
+    ...weights
   }
-  triggerToast(`Loaded profile to target: ${alt.name.replace(' Configuration', '')}`, 'info')
+  triggerToast(`Loaded profile & aligned weights for: ${alt.name.replace(' Configuration', '')}`, 'info')
 }
 
 // Smart Badge Helper
@@ -934,7 +943,7 @@ const resetForm = () => {
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
+    100%: 100%;
     background: white !important;
     display: flex;
     align-items: flex-start;
