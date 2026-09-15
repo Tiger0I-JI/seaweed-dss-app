@@ -943,7 +943,7 @@ const resetForm = () => {
     left: 0;
     top: 0;
     width: 100%;
-    100%: 100%;
+    height: 100%;
     background: white !important;
     display: flex;
     align-items: flex-start;
