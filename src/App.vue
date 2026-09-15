@@ -35,17 +35,25 @@ const latestResult = ref({
 const showDetailModal = ref(false)
 const selectedRecord = ref(null)
 
-// Matrix breakdown modal state
+// New Feature Modals
 const showMatrixModal = ref(false)
+const showComparisonModal = ref(false)
+const showSensitivityModal = ref(false)
+
+// Baseline Alternatives Data
+const alternatives = [
+  { name: 'Labor-Oriented Configuration',         labor: 6,  cost: 90000,   space: 30,  capacity: 5000,  criteria: [10000, 90000,   30,  600] },
+  { name: 'Machine-Oriented Configuration',       labor: 4,  cost: 450000,  space: 80,  capacity: 30000, criteria: [45000, 450000,  80,  3500] },
+  { name: 'Space-Efficient Layout Configuration', labor: 5,  cost: 250000,  space: 40,  capacity: 15000, criteria: [28000, 250000,  40,  2000] },
+  { name: 'Flexible Manufacturing Configuration', labor: 8,  cost: 1200000, space: 150, capacity: 45000, criteria: [90000, 1200000, 150, 10000] }
+]
 
 // Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
-const runConstraintScreeningAndTopsis = () => {
-  const alternatives = [
-    { name: 'Labor-Oriented Configuration',         labor: 6,  cost: 90000,   space: 30,  criteria: [10000, 90000,   30,  600] },
-    { name: 'Machine-Oriented Configuration',       labor: 4,  cost: 450000,  space: 80,  criteria: [45000, 450000,  80,  3500] },
-    { name: 'Space-Efficient Layout Configuration', labor: 5,  cost: 250000,  space: 40,  criteria: [28000, 250000,  40,  2000] },
-    { name: 'Flexible Manufacturing Configuration', labor: 8,  cost: 1200000, space: 150, criteria: [90000, 1200000, 150, 10000] }
-  ]
+const runConstraintScreeningAndTopsis = (customWeights = null) => {
+  const wProfit = customWeights ? customWeights.profit : form.value.weight_profit
+  const wCost = customWeights ? customWeights.cost : form.value.weight_cost
+  const wSpace = customWeights ? customWeights.space : form.value.weight_space
+  const wCapacity = customWeights ? customWeights.capacity : form.value.weight_capacity
 
   // Stage 1: Constraint-Based Screening
   const feasible = alternatives.filter(alt => 
@@ -75,12 +83,12 @@ const runConstraintScreeningAndTopsis = () => {
   }
 
   // Stage 2: TOPSIS Ranking Calculation
-  const sumWeights = form.value.weight_profit + form.value.weight_cost + form.value.weight_space + form.value.weight_capacity
+  const sumWeights = wProfit + wCost + wSpace + wCapacity
   const W = [
-    form.value.weight_profit / sumWeights,
-    form.value.weight_cost / sumWeights,
-    form.value.weight_space / sumWeights,
-    form.value.weight_capacity / sumWeights
+    wProfit / sumWeights,
+    wCost / sumWeights,
+    wSpace / sumWeights,
+    wCapacity / sumWeights
   ]
 
   const numCriteria = W.length
@@ -142,7 +150,7 @@ const runConstraintScreeningAndTopsis = () => {
   return {
     text: `${best.name} (TOPSIS Score: ${best.score.toFixed(4)})`,
     score: best.score.toFixed(4),
-    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${form.value.weight_profit}, Cost: ${form.value.weight_cost}, Space: ${form.value.weight_space}, Capacity: ${form.value.weight_capacity}).`,
+    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${wProfit}, Cost: ${wCost}, Space: ${wSpace}, Capacity: ${wCapacity}).`,
     rankings: resultsList,
     steps: {
       normalized: normalizedMatrix,
@@ -241,6 +249,18 @@ const resetForm = () => {
 const exportReport = () => {
   window.print()
 }
+
+// Sensitivity Analysis Computed Scenarios (Varying Profit Weight from 1 to 5)
+const sensitivityScenarios = [
+  { label: 'Low Profit Focus (W_profit = 1)', weights: { profit: 1, cost: 4, space: 3, capacity: 5 } },
+  { label: 'Moderate Profit Focus (W_profit = 3)', weights: { profit: 3, cost: 4, space: 3, capacity: 5 } },
+  { label: 'High Profit Focus (W_profit = 5)', weights: { profit: 5, cost: 4, space: 3, capacity: 5 } }
+]
+
+const getSensitivityResult = (weights) => {
+  const res = runConstraintScreeningAndTopsis(weights)
+  return res.rankings && res.rankings.length > 0 ? res.rankings[0].name : 'Infeasible'
+}
 </script>
 
 <template>
@@ -250,9 +270,17 @@ const exportReport = () => {
         <h1>Seaweed Snack Production: DSS Configuration</h1>
         <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
       </div>
-      <button class="btn btn-secondary" @click="exportReport" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1;">
-        🖨️ Export / Print Report
-      </button>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" @click="showComparisonModal = true" style="background: #e0e7ff; color: #3730a3; border: none; font-weight: 600;">
+          ⚖️ Side-by-Side Comparison
+        </button>
+        <button class="btn btn-secondary" @click="showSensitivityModal = true" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600;">
+          📈 Sensitivity Analysis
+        </button>
+        <button class="btn btn-secondary" @click="exportReport" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1;">
+          🖨️ Export Report
+        </button>
+      </div>
     </header>
 
     <!-- Factory Alternatives Baseline Specifications Card -->
@@ -282,33 +310,12 @@ const exportReport = () => {
             </tr>
           </thead>
           <tbody>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px; font-weight: 500; color: #1e293b;">Labor-Oriented Configuration</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">6</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">90,000</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">30</td>
-              <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~5,000</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px; font-weight: 500; color: #1e293b;">Space-Efficient Layout Configuration</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">5</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">250,000</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">40</td>
-              <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~15,000</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px; font-weight: 500; color: #1e293b;">Machine-Oriented Configuration</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">4</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">450,000</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">80</td>
-              <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~30,000</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; font-weight: 500; color: #1e293b;">Flexible Manufacturing Configuration</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">8</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">1,200,000</td>
-              <td style="padding: 12px; text-align: center; color: #475569;">150</td>
-              <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~45,000</td>
+            <tr v-for="alt in alternatives" :key="alt.name" style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 12px; font-weight: 500; color: #1e293b;">{{ alt.name }}</td>
+              <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.labor }}</td>
+              <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.cost.toLocaleString() }}</td>
+              <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.space }}</td>
+              <td style="padding: 12px; text-align: center; font-weight: bold; color: #4f46e5;">~{{ alt.capacity.toLocaleString() }}</td>
             </tr>
           </tbody>
         </table>
@@ -424,7 +431,7 @@ const exportReport = () => {
         </h2>
         <div style="display: flex; gap: 8px; align-items: center;">
           <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #e0e7ff; color: #3730a3; border: none; border-radius: 20px; font-weight: 600; cursor: pointer;">
-            🔍 View Matrix Calculation Breakdown
+            🔍 View Matrix Breakdown
           </button>
           <span style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0;">
             ✨ Real-time Multi-Criteria Ranking (Ci)
@@ -612,6 +619,85 @@ const exportReport = () => {
 
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn btn-secondary" @click="showMatrixModal = false" style="width: 100%;">Close Matrix Breakdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Side-by-Side Alternative Comparison Modal -->
+    <div v-if="showComparisonModal" class="modal-overlay" @click.self="showComparisonModal = false">
+      <div class="modal-content" style="max-width: 900px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">⚖️ Side-by-Side Alternative Configuration Comparison</h3>
+          <button @click="showComparisonModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 70vh; overflow-x: auto;">
+          <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+            Direct comparison of all four baseline production alternatives across key engineering and economic criteria.
+          </p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <thead>
+              <tr style="background: #f1f5f9; color: #475569;">
+                <th style="padding: 10px;">Criteria / Parameter</th>
+                <th style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.name.replace(' Configuration', '') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px; font-weight: 500;">Workforce Required</td>
+                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.labor }} Workers</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px; font-weight: 500;">Investment Cost</td>
+                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.cost.toLocaleString() }} THB</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px; font-weight: 500;">Space Utilization</td>
+                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.space }} m²</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px; font-weight: 500;">Capacity / Month</td>
+                <td style="padding: 10px; text-align: center; font-weight: bold; color: #4f46e5;" v-for="alt in alternatives" :key="alt.name">~{{ alt.capacity.toLocaleString() }} Units</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn btn-secondary" @click="showComparisonModal = false" style="width: 100%;">Close Comparison</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Interactive Sensitivity Analysis Modal -->
+    <div v-if="showSensitivityModal" class="modal-overlay" @click.self="showSensitivityModal = false">
+      <div class="modal-content" style="max-width: 700px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">📈 Interactive Sensitivity Analysis (Weight Perturbation)</h3>
+          <button @click="showSensitivityModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+            Evaluating how the optimal recommendation shifts when the importance of profit weight changes under your current resource constraints.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div v-for="scen in sensitivityScenarios" :key="scen.label" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>{{ scen.label }}</strong>
+                <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Cost: {{ scen.weights.cost }}, Space: {{ scen.weights.space }}, Capacity: {{ scen.weights.capacity }}</p>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 12px; background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 12px; font-weight: 600;">
+                  Best: {{ getSensitivityResult(scen.weights) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn btn-secondary" @click="showSensitivityModal = false" style="width: 100%;">Close Sensitivity Analysis</button>
         </div>
       </div>
     </div>
