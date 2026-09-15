@@ -343,3 +343,12 @@ input[type="range"] {
   color: #64748b;
   line-height: 1.5;
 }
+
+@media print {
+  .form-card, .form-actions, button, .header button {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
