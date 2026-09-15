@@ -73,6 +73,70 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
+// Helper engine for specific record snapshot calculation
+const calculateRecordRankings = (budget, labor, space) => {
+  const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
+  if (feasible.length === 0) return []
+  if (feasible.length === 1) return [{ name: feasible[0].name, score: 1.0 }]
+
+  const sumWeights = form.value.weight_profit + form.value.weight_cost + form.value.weight_space + form.value.weight_capacity
+  const W = [
+    form.value.weight_profit / sumWeights,
+    form.value.weight_cost / sumWeights,
+    form.value.weight_space / sumWeights,
+    form.value.weight_capacity / sumWeights
+  ]
+
+  const numCriteria = W.length
+  const divisors = Array(numCriteria).fill(0)
+  
+  feasible.forEach(alt => {
+    for (let j = 0; j < numCriteria; j++) divisors[j] += Math.pow(alt.criteria[j], 2)
+  })
+  for (let j = 0; j < numCriteria; j++) divisors[j] = Math.sqrt(divisors[j])
+
+  const normalizedMatrix = feasible.map(alt => ({
+    name: alt.name,
+    values: alt.criteria.map((val, j) => divisors[j] === 0 ? 0 : val / divisors[j])
+  }))
+
+  const weightedMatrix = normalizedMatrix.map(row => ({
+    name: row.name,
+    values: row.values.map((val, j) => val * W[j])
+  }))
+
+  const isMaxBenefit = [true, false, false, true]
+  const V_plus = Array(numCriteria).fill(0)
+  const V_minus = Array(numCriteria).fill(0)
+
+  for (let j = 0; j < numCriteria; j++) {
+    const columnValues = weightedMatrix.map(row => row.values[j])
+    if (isMaxBenefit[j]) {
+      V_plus[j] = Math.max(...columnValues)
+      V_minus[j] = Math.min(...columnValues)
+    } else {
+      V_plus[j] = Math.min(...columnValues)
+      V_minus[j] = Math.max(...columnValues)
+    }
+  }
+
+  let resultsList = []
+  weightedMatrix.forEach(row => {
+    let sPlusSq = 0, sMinusSq = 0
+    for (let j = 0; j < numCriteria; j++) {
+      sPlusSq += Math.pow(row.values[j] - V_plus[j], 2)
+      sMinusSq += Math.pow(row.values[j] - V_minus[j], 2)
+    }
+    const S_plus = Math.sqrt(sPlusSq)
+    const S_minus = Math.sqrt(sMinusSq)
+    const C_i = S_minus / (S_plus + S_minus)
+    resultsList.push({ name: row.name, score: C_i })
+  })
+
+  resultsList.sort((a, b) => b.score - a.score)
+  return resultsList
+}
+
 // Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
 const runConstraintScreeningAndTopsis = () => {
   const feasible = alternatives.filter(alt => 
@@ -272,6 +336,30 @@ const viewDetails = (item) => {
   showDetailModal.value = true
 }
 
+const loadRecordToDashboard = (item) => {
+  form.value = {
+    budget: item.budget,
+    labor: item.labor,
+    space: item.space,
+    target_capacity: item.target_capacity,
+    weight_profit: 4,
+    weight_cost: 4,
+    weight_space: 3,
+    weight_capacity: 5
+  }
+  // Run engine to update dashboard live ranking bars immediately
+  const res = runConstraintScreeningAndTopsis()
+  latestResult.value = {
+    config: item.recommended_config,
+    score: res.score,
+    reason: res.reason,
+    rankings: res.rankings,
+    steps: res.steps
+  }
+  showDetailModal.value = false
+  triggerToast('Historical parameters loaded into main dashboard!', 'success')
+}
+
 const printSingleRecord = (item) => {
   selectedRecord.value = item
   showDetailModal.value = true
@@ -293,10 +381,6 @@ const resetForm = () => {
   form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
   editingId.value = null
 }
-
-const exportReport = () => {
-  window.print()
-}
 </script>
 
 <template>
@@ -311,11 +395,6 @@ const exportReport = () => {
       <div>
         <h1>Seaweed Snack Production: DSS Configuration</h1>
         <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
-      </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;" class="no-print">
-        <button class="btn btn-secondary" @click="exportReport" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1;">
-          🖨️ Export Report
-        </button>
       </div>
     </header>
 
@@ -593,29 +672,62 @@ const exportReport = () => {
       </div>
     </div>
 
-    <!-- 2. Detail Popup Modal (Used for Viewing & Printing Individual Records) -->
+    <!-- 2. Detail Popup Modal (Used for Viewing Complete Historical Breakdown & Reloading) -->
     <div v-if="showDetailModal" class="modal-overlay printable-modal-overlay" @click.self="closeDetailModal">
-      <div class="modal-content printable-modal-content">
+      <div class="modal-content printable-modal-content" style="max-width: 650px; width: 95%; max-height: 80vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" class="no-print">
-          <h3 style="margin: 0;">Evaluation Record Report</h3>
+          <h3 style="margin: 0;">Evaluation Record Details & Rankings</h3>
           <button @click="closeDetailModal" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
         </div>
 
-        <h3 class="print-only-title" style="display: none; margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 8px;">
-          Seaweed Snack Production - Evaluation Report
-        </h3>
-
-        <div v-if="selectedRecord" class="modal-body">
-          <p><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
-          <p><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
-          <p><strong>Available Space:</strong> {{ selectedRecord.space }} m²</p>
-          <p><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
-          <p><strong>Recommended Configuration:</strong> <span style="color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</span></p>
-          <p><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+        <!-- Print-only Formal Header -->
+        <div class="print-only-title" style="display: none; margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+          <h2 style="margin: 0; font-size: 18px; color: #1e293b;">Seaweed Snack Production Technology Licensing DSS</h2>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">Official Evaluation & TOPSIS Decision Report</p>
         </div>
 
-        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
-          <button class="btn btn-primary no-print" @click="window.print()" style="flex: 1;">🖨️ Print This Record</button>
+        <div v-if="selectedRecord" class="modal-body">
+          <div style="margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px; font-weight: bold;">1. Input Resource Constraints Snapshot</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 12px; color: #475569;">
+              <p style="margin: 0;"><strong>Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
+              <p style="margin: 0;"><strong>Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
+              <p style="margin: 0;"><strong>Space:</strong> {{ selectedRecord.space }} m²</p>
+              <p style="margin: 0;"><strong>Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
+            </div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px; font-weight: bold;">2. Final Decision Recommendation</h4>
+            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
+          </div>
+
+          <!-- Full Ranking Table Inside View Modal -->
+          <div>
+            <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 8px; font-weight: bold;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings for this Record</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
+                  <th style="padding: 6px;">Rank</th>
+                  <th style="padding: 6px;">Alternative Configuration</th>
+                  <th style="padding: 6px; text-align: right;">Ci Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(r, idx) in calculateRecordRankings(selectedRecord.budget, selectedRecord.labor, selectedRecord.space)" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 6px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 6px;">{{ r.name }}</td>
+                  <td style="padding: 6px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white;">📥 Load to Dashboard</button>
+          <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none;">🖨️ Print</button>
           <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1;">Close</button>
         </div>
       </div>
@@ -793,7 +905,7 @@ const exportReport = () => {
   margin-left: 4px;
 }
 
-/* Clean Print Styling: Print only the active evaluation record cleanly */
+/* Clean Print Styling: Print formal evaluation report cleanly */
 @media print {
   body * {
     visibility: hidden !important;
@@ -814,23 +926,20 @@ const exportReport = () => {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 40px;
+    padding-top: 20px;
   }
 
   .printable-modal-content {
     box-shadow: none !important;
     border: none !important;
     width: 100% !important;
-    max-width: 600px !important;
+    max-width: 700px !important;
     background: white !important;
     padding: 0 !important;
   }
 
   .print-only-title {
     display: block !important;
-    font-size: 20px;
-    font-weight: bold;
-    color: #000;
   }
 
   .no-print {
