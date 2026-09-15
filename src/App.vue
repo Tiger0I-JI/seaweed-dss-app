@@ -35,7 +35,7 @@ const latestResult = ref({
 const showDetailModal = ref(false)
 const selectedRecord = ref(null)
 
-// New Modal state for Transparent TOPSIS Calculation Breakdown
+// Matrix breakdown modal state
 const showMatrixModal = ref(false)
 
 // Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
@@ -193,7 +193,11 @@ const saveEvaluation = async () => {
 
 const fetchEvaluations = async () => {
   try {
-    const { data, error } = await supabase.from('evaluations').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase
+      .from('evaluations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5)
     if (error) throw error
     evaluations.value = data
   } catch (err) {}
@@ -234,7 +238,6 @@ const resetForm = () => {
   editingId.value = null
 }
 
-// Print / Export Function
 const exportReport = () => {
   window.print()
 }
@@ -424,13 +427,13 @@ const exportReport = () => {
             🔍 View Matrix Calculation Breakdown
           </button>
           <span style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0;">
-            ✨ Real-time Multi-Criteria Ranking (Cᵢ)
+            ✨ Real-time Multi-Criteria Ranking (Ci)
           </span>
         </div>
       </div>
       
       <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
-        Visual comparison of alternative configurations based on Closeness Coefficients (Cᵢ).
+        Visual comparison of alternative configurations based on Closeness Coefficients (Ci).
       </p>
 
       <!-- Dynamic Ranking Bars -->
@@ -443,7 +446,7 @@ const exportReport = () => {
         ])" :key="item.name" style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
             <span style="font-weight: 600; color: #1e293b;">{{ index + 1 }}. {{ item.name }}</span>
-            <span style="font-weight: 700; color: #4f46e5;">Cᵢ = {{ (item.score || 0).toFixed(3) }} (Rank #{{ index + 1 }})</span>
+            <span style="font-weight: 700; color: #4f46e5;">Ci = {{ (item.score || 0).toFixed(3) }} (Rank #{{ index + 1 }})</span>
           </div>
           <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
             <div :style="{ width: ((item.score || 0) * 100) + '%', background: index === 0 ? '#4f46e5' : '#0ea5e9', height: '100%', borderRadius: '5px', transition: 'width 0.5s ease' }"></div>
@@ -452,10 +455,10 @@ const exportReport = () => {
       </div>
     </div>
 
-    <!-- Evaluation Records Section -->
+    <!-- Evaluation Records Section (Limited to 5 latest records) -->
     <div class="card">
       <div class="card-header">
-        <h2>Evaluation Records</h2>
+        <h2>Evaluation Records (Latest 5)</h2>
       </div>
       <div class="table-responsive">
         <table class="data-table">
@@ -536,7 +539,7 @@ const exportReport = () => {
       </div>
     </div>
 
-   <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
+    <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
     <div v-if="showMatrixModal" class="modal-overlay" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 800px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
