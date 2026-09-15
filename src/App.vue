@@ -22,13 +22,23 @@ const latestResult = ref({
   config: '',
   score: '',
   reason: '',
-  rankings: []
+  rankings: [],
+  steps: {
+    normalized: [],
+    weighted: [],
+    vPlus: [],
+    vMinus: [],
+    distances: []
+  }
 })
 
 const showDetailModal = ref(false)
 const selectedRecord = ref(null)
 
-// Constraint Screening & TOPSIS Decision Engine
+// New Modal state for Transparent TOPSIS Calculation Breakdown
+const showMatrixModal = ref(false)
+
+// Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
 const runConstraintScreeningAndTopsis = () => {
   const alternatives = [
     { name: 'Labor-Oriented Configuration',         labor: 6,  cost: 90000,   space: 30,  criteria: [10000, 90000,   30,  600] },
@@ -49,7 +59,8 @@ const runConstraintScreeningAndTopsis = () => {
       text: 'Infeasible: Exceeds Constraints',
       score: 'N/A',
       reason: 'Your available budget, workforce, or space is below the minimum engineering requirements of all 4 alternative configurations.',
-      rankings: alternatives.map(alt => ({ name: alt.name, score: 0 }))
+      rankings: alternatives.map(alt => ({ name: alt.name, score: 0 })),
+      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [] }
     }
   }
 
@@ -58,7 +69,8 @@ const runConstraintScreeningAndTopsis = () => {
       text: `${feasible[0].name} (Only 1 feasible option)`,
       score: '1.0000',
       reason: 'Only this configuration satisfies your strict resource constraints; therefore, no further multi-criteria ranking was required.',
-      rankings: [{ name: feasible[0].name, score: 1.0 }]
+      rankings: [{ name: feasible[0].name, score: 1.0 }],
+      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [] }
     }
   }
 
@@ -79,14 +91,24 @@ const runConstraintScreeningAndTopsis = () => {
   })
   for (let j = 0; j < numCriteria; j++) divisors[j] = Math.sqrt(divisors[j])
 
-  const weightedMatrix = feasible.map(alt => alt.criteria.map((val, j) => (val / divisors[j]) * W[j]))
+  // Normalized Matrix (r_ij)
+  const normalizedMatrix = feasible.map(alt => ({
+    name: alt.name,
+    values: alt.criteria.map((val, j) => divisors[j] === 0 ? 0 : val / divisors[j])
+  }))
+
+  // Weighted Normalized Matrix (v_ij = r_ij * W_j)
+  const weightedMatrix = normalizedMatrix.map(row => ({
+    name: row.name,
+    values: row.values.map((val, j) => val * W[j])
+  }))
 
   const isMaxBenefit = [true, false, false, true]
   const V_plus = Array(numCriteria).fill(0)
   const V_minus = Array(numCriteria).fill(0)
 
   for (let j = 0; j < numCriteria; j++) {
-    const columnValues = weightedMatrix.map(row => row[j])
+    const columnValues = weightedMatrix.map(row => row.values[j])
     if (isMaxBenefit[j]) {
       V_plus[j] = Math.max(...columnValues)
       V_minus[j] = Math.min(...columnValues)
@@ -97,30 +119,38 @@ const runConstraintScreeningAndTopsis = () => {
   }
 
   let resultsList = []
+  let distanceDetails = []
 
-  feasible.forEach((alt, i) => {
+  weightedMatrix.forEach((row, i) => {
     let sPlusSq = 0
     let sMinusSq = 0
     for (let j = 0; j < numCriteria; j++) {
-      sPlusSq += Math.pow(weightedMatrix[i][j] - V_plus[j], 2)
-      sMinusSq += Math.pow(weightedMatrix[i][j] - V_minus[j], 2)
+      sPlusSq += Math.pow(row.values[j] - V_plus[j], 2)
+      sMinusSq += Math.pow(row.values[j] - V_minus[j], 2)
     }
     const S_plus = Math.sqrt(sPlusSq)
     const S_minus = Math.sqrt(sMinusSq)
     
     const C_i = S_minus / (S_plus + S_minus)
-    resultsList.push({ name: alt.name, score: C_i })
+    resultsList.push({ name: row.name, score: C_i })
+    distanceDetails.push({ name: row.name, sPlus: S_plus, sMinus: S_minus, score: C_i })
   })
 
   resultsList.sort((a, b) => b.score - a.score)
-
   const best = resultsList[0]
 
   return {
     text: `${best.name} (TOPSIS Score: ${best.score.toFixed(4)})`,
     score: best.score.toFixed(4),
     reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${form.value.weight_profit}, Cost: ${form.value.weight_cost}, Space: ${form.value.weight_space}, Capacity: ${form.value.weight_capacity}).`,
-    rankings: resultsList
+    rankings: resultsList,
+    steps: {
+      normalized: normalizedMatrix,
+      weighted: weightedMatrix,
+      vPlus: V_plus,
+      vMinus: V_minus,
+      distances: distanceDetails
+    }
   }
 }
 
@@ -151,7 +181,8 @@ const saveEvaluation = async () => {
       config: recommendationResult,
       score: resultObj.score,
       reason: resultObj.reason,
-      rankings: resultObj.rankings
+      rankings: resultObj.rankings,
+      steps: resultObj.steps
     }
     showResultModal.value = true
 
@@ -202,13 +233,23 @@ const resetForm = () => {
   form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
   editingId.value = null
 }
+
+// Print / Export Function
+const exportReport = () => {
+  window.print()
+}
 </script>
 
 <template>
   <div class="app-container">
-    <header class="header">
-      <h1>Seaweed Snack Production: DSS Configuration</h1>
-      <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
+    <header class="header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1>Seaweed Snack Production: DSS Configuration</h1>
+        <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
+      </div>
+      <button class="btn btn-secondary" @click="exportReport" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1;">
+        🖨️ Export / Print Report
+      </button>
     </header>
 
     <!-- Factory Alternatives Baseline Specifications Card -->
@@ -378,9 +419,14 @@ const resetForm = () => {
         <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
           <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
         </h2>
-        <span style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0;">
-          ✨ Real-time Multi-Criteria Ranking (Cᵢ)
-        </span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #e0e7ff; color: #3730a3; border: none; border-radius: 20px; font-weight: 600; cursor: pointer;">
+            🔍 View Matrix Calculation Breakdown
+          </button>
+          <span style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0;">
+            ✨ Real-time Multi-Criteria Ranking (Cᵢ)
+          </span>
+        </div>
       </div>
       
       <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
@@ -489,6 +535,82 @@ const resetForm = () => {
         </div>
       </div>
     </div>
+
+    <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
+    <div v-if="showMatrixModal" class="modal-overlay" @click.self="showMatrixModal = false">
+      <div class="modal-content" style="max-width: 800px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">📐 TOPSIS Step-by-Step Mathematical Breakdown</h3>
+          <button @click="showMatrixModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+            Detailed inspection of intermediate mathematical matrices computed by the decision engine during the latest run.
+          </p>
+
+          <div v-if="latestResult.steps && latestResult.steps.weighted && latestResult.steps.weighted.length > 0">
+            <h4 style="color: #1e293b; margin-bottom: 8px;">1. Weighted Normalized Decision Matrix ($v_{ij}$)</h4>
+            <div style="overflow-x: auto; margin-bottom: 20px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 8px;">Alternative</th>
+                    <th style="padding: 8px; text-align: center;">C1 (Profit/Benefit)</th>
+                    <th style="padding: 8px; text-align: center;">C2 (Cost/Cost)</th>
+                    <th style="padding: 8px; text-align: center;">C3 (Space/Cost)</th>
+                    <th style="padding: 8px; text-align: center;">C4 (Capacity/Benefit)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in latestResult.steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h4 style="color: #1e293b; margin-bottom: 8px;">2. Ideal Best ($A^+$) and Ideal Worst ($A^-$) Solutions</h4>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px;">
+              <p><strong>$A^+$ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
+              <p style="margin-top: 6px;"><strong>$A^-$ (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
+            </div>
+
+            <h4 style="color: #1e293b; margin-bottom: 8px;">3. Euclidean Separation Measures & Closeness Coefficients ($C_i$)</h4>
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 8px;">Alternative</th>
+                    <th style="padding: 8px; text-align: center;">$S_i^+$ (Distance to Best)</th>
+                    <th style="padding: 8px; text-align: center;">$S_i^-$ (Distance to Worst)</th>
+                    <th style="padding: 8px; text-align: center;">$C_i$ Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="d in latestResult.steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 8px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-else style="text-align: center; color: #64748b; padding: 20px;">
+            Please run the decision engine first to generate matrix computation steps.
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn btn-secondary" @click="showMatrixModal = false" style="width: 100%;">Close Matrix Breakdown</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-
