@@ -93,7 +93,7 @@ const getAlternativeBadge = (name) => {
   if (name.includes('Labor')) return { text: 'Lowest Investment', bg: '#dcfce7', color: '#166534' }
   if (name.includes('Space-Efficient')) return { text: 'Space Saver', bg: '#e0f2fe', color: '#0369a1' }
   if (name.includes('Machine-Oriented')) return { text: 'High Capacity', bg: '#fef3c7', color: '#92400e' }
-  if (name.includes('Flexible')) return { text: 'Max Output', bg: '#ede9fe', color: '#5b21b6' }
+  if (name.includes('Flexible')) return { text: 'Multi-Product & Agility', bg: '#ede9fe', color: '#5b21b6' } // อัปเกรดตรงนี้
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
