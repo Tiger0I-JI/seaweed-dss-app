@@ -13,10 +13,6 @@ const form = ref({
   weight_capacity: 5
 })
 
-
-// Interactive Sensitivity Slider State
-const sensitivityProfitWeight = ref(4)
-  
 const evaluations = ref([])
 const editingId = ref(null)
 
@@ -43,6 +39,7 @@ const selectedRecord = ref(null)
 const showMatrixModal = ref(false)
 const showComparisonModal = ref(false)
 const showSensitivityModal = ref(false)
+const sensitivityProfitWeight = ref(4)
 
 // Baseline Alternatives Data
 const alternatives = [
@@ -253,18 +250,6 @@ const resetForm = () => {
 const exportReport = () => {
   window.print()
 }
-
-// Sensitivity Analysis Computed Scenarios (Varying Profit Weight from 1 to 5)
-const sensitivityScenarios = [
-  { label: 'Low Profit Focus (W_profit = 1)', weights: { profit: 1, cost: 4, space: 3, capacity: 5 } },
-  { label: 'Moderate Profit Focus (W_profit = 3)', weights: { profit: 3, cost: 4, space: 3, capacity: 5 } },
-  { label: 'High Profit Focus (W_profit = 5)', weights: { profit: 5, cost: 4, space: 3, capacity: 5 } }
-]
-
-const getSensitivityResult = (weights) => {
-  const res = runConstraintScreeningAndTopsis(weights)
-  return res.rankings && res.rankings.length > 0 ? res.rankings[0].name : 'Infeasible'
-}
 </script>
 
 <template>
@@ -274,7 +259,7 @@ const getSensitivityResult = (weights) => {
         <h1>Seaweed Snack Production: DSS Configuration</h1>
         <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn btn-secondary" @click="showComparisonModal = true" style="background: #e0e7ff; color: #3730a3; border: none; font-weight: 600;">
           ⚖️ Side-by-Side Comparison
         </button>
@@ -433,7 +418,7 @@ const getSensitivityResult = (weights) => {
         <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
           <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
         </h2>
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #e0e7ff; color: #3730a3; border: none; border-radius: 20px; font-weight: 600; cursor: pointer;">
             🔍 View Matrix Breakdown
           </button>
@@ -673,7 +658,7 @@ const getSensitivityResult = (weights) => {
       </div>
     </div>
 
-    <!-- 5. Interactive Sensitivity Analysis Modal -->
+    <!-- 5. Interactive Sensitivity Analysis Modal with Slider -->
     <div v-if="showSensitivityModal" class="modal-overlay" @click.self="showSensitivityModal = false">
       <div class="modal-content" style="max-width: 750px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -721,3 +706,5 @@ const getSensitivityResult = (weights) => {
         </div>
       </div>
     </div>
+  </div>
+</template>
