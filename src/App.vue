@@ -366,8 +366,8 @@ const resetForm = () => {
     </div>
 
     <!-- Results Section -->
-<!-- Comparative Evaluation & TOPSIS Ranking Results Card -->
-<div class="card" style="margin-bottom: 24px;">
+<!-- Dynamic Comparative Evaluation & TOPSIS Ranking Results Card -->
+<div class="card" style="margin-bottom: 24px;" v-if="evaluations && evaluations.length > 0">
   <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
       <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
@@ -381,9 +381,9 @@ const resetForm = () => {
     Visual comparison of alternative configurations based on Closeness Coefficients (Cᵢ).
   </p>
 
-  <!-- Dynamic Ranking Bars with Fallback -->
+  <!-- Dynamic Ranking Bars from Latest Evaluation Record -->
   <div style="display: flex; flex-direction: column; gap: 16px;">
-    <div v-for="(item, index) in (latestResult?.rankings || [
+    <div v-for="(item, index) in (evaluations[0].rankings || [
       { name: 'Flexible Manufacturing Configuration', score: 0.845 },
       { name: 'Machine-Oriented Configuration', score: 0.720 },
       { name: 'Space-Efficient Layout Configuration', score: 0.580 },
@@ -399,6 +399,7 @@ const resetForm = () => {
     </div>
   </div>
 </div>
+
 
 
 
