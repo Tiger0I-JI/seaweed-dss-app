@@ -35,9 +35,8 @@ const latestResult = ref({
 const showDetailModal = ref(false)
 const selectedRecord = ref(null)
 
-// New Feature Modals
+// Feature Modals
 const showMatrixModal = ref(false)
-const showComparisonModal = ref(false)
 const showSensitivityModal = ref(false)
 const sensitivityProfitWeight = ref(4)
 
@@ -260,9 +259,6 @@ const exportReport = () => {
         <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
       </div>
       <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn btn-secondary" @click="showComparisonModal = true" style="background: #e0e7ff; color: #3730a3; border: none; font-weight: 600;">
-          ⚖️ Side-by-Side Comparison
-        </button>
         <button class="btn btn-secondary" @click="showSensitivityModal = true" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600;">
           📈 Sensitivity Analysis
         </button>
@@ -612,53 +608,7 @@ const exportReport = () => {
       </div>
     </div>
 
-    <!-- 4. Side-by-Side Alternative Comparison Modal -->
-    <div v-if="showComparisonModal" class="modal-overlay" @click.self="showComparisonModal = false">
-      <div class="modal-content" style="max-width: 900px; width: 95%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0;">⚖️ Side-by-Side Alternative Configuration Comparison</h3>
-          <button @click="showComparisonModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
-        </div>
-        
-        <div class="modal-body" style="max-height: 70vh; overflow-x: auto;">
-          <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
-            Direct comparison of all four baseline production alternatives across key engineering and economic criteria.
-          </p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-            <thead>
-              <tr style="background: #f1f5f9; color: #475569;">
-                <th style="padding: 10px;">Criteria / Parameter</th>
-                <th style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.name.replace(' Configuration', '') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">Workforce Required</td>
-                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.labor }} Workers</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">Investment Cost</td>
-                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.cost.toLocaleString() }} THB</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">Space Utilization</td>
-                <td style="padding: 10px; text-align: center;" v-for="alt in alternatives" :key="alt.name">{{ alt.space }} m²</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">Capacity / Month</td>
-                <td style="padding: 10px; text-align: center; font-weight: bold; color: #4f46e5;" v-for="alt in alternatives" :key="alt.name">~{{ alt.capacity.toLocaleString() }} Units</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="modal-actions" style="margin-top: 16px;">
-          <button class="btn btn-secondary" @click="showComparisonModal = false" style="width: 100%;">Close Comparison</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. Interactive Sensitivity Analysis Modal with Slider -->
+    <!-- 4. Interactive Sensitivity Analysis Modal with Slider -->
     <div v-if="showSensitivityModal" class="modal-overlay" @click.self="showSensitivityModal = false">
       <div class="modal-content" style="max-width: 750px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
