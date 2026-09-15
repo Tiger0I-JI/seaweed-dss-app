@@ -366,8 +366,8 @@ const resetForm = () => {
     </div>
 
     <!-- Results Section -->
-<!-- Comparative Evaluation & TOPSIS Ranking Results Card -->
-<div class="card" style="margin-bottom: 24px;">
+<!-- Dynamic Comparative Evaluation & TOPSIS Ranking Results Card -->
+<div class="card" style="margin-bottom: 24px;" v-if="latestResult">
   <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
       <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
@@ -381,55 +381,20 @@ const resetForm = () => {
     Visual comparison of alternative configurations based on Closeness Coefficients (Cᵢ).
   </p>
 
-  <!-- Ranking Bars / Chart Container -->
+  <!-- Dynamic Ranking Bars -->
   <div style="display: flex; flex-direction: column; gap: 16px;">
-    
-    <!-- Alternative 1 -->
-    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+    <div v-for="(item, index) in latestResult.rankings" :key="item.name" style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-        <span style="font-weight: 600; color: #1e293b;">1. Flexible Manufacturing Configuration</span>
-        <span style="font-weight: 700; color: #4f46e5;">Cᵢ = 0.845 (Rank #1)</span>
+        <span style="font-weight: 600; color: #1e293b;">{{ index + 1 }}. {{ item.name }}</span>
+        <span style="font-weight: 700; color: #4f46e5;">Cᵢ = {{ item.score.toFixed(3) }} (Rank #{{ index + 1 }})</span>
       </div>
       <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-        <div style="width: 84.5%; background: #4f46e5; height: 100%; border-radius: 5px;"></div>
+        <div :style="{ width: (item.score * 100) + '%', background: index === 0 ? '#4f46e5' : '#0ea5e9', height: '100%', borderRadius: '5px', transition: 'width 0.5s ease' }"></div>
       </div>
     </div>
-
-    <!-- Alternative 2 -->
-    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-        <span style="font-weight: 600; color: #1e293b;">2. Machine-Oriented Configuration</span>
-        <span style="font-weight: 700; color: #64748b;">Cᵢ = 0.720 (Rank #2)</span>
-      </div>
-      <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-        <div style="width: 72%; background: #0ea5e9; height: 100%; border-radius: 5px;"></div>
-      </div>
-    </div>
-
-    <!-- Alternative 3 -->
-    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-        <span style="font-weight: 600; color: #1e293b;">3. Space-Efficient Layout Configuration</span>
-        <span style="font-weight: 700; color: #64748b;">Cᵢ = 0.580 (Rank #3)</span>
-      </div>
-      <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-        <div style="width: 58%; background: #10b981; height: 100%; border-radius: 5px;"></div>
-      </div>
-    </div>
-
-    <!-- Alternative 4 -->
-    <div style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-        <span style="font-weight: 600; color: #1e293b;">4. Labor-Oriented Configuration</span>
-        <span style="font-weight: 700; color: #64748b;">Cᵢ = 0.410 (Rank #4)</span>
-      </div>
-      <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-        <div style="width: 41%; background: #f59e0b; height: 100%; border-radius: 5px;"></div>
-      </div>
-    </div>
-
   </div>
 </div>
+
 
     <div class="card">
       <div class="card-header">
