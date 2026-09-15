@@ -15,6 +15,14 @@ const form = ref({
 
 const evaluations = ref([])
 const editingId = ref(null)
+const isProcessing = ref(false)
+
+// Toast Notification State
+const toast = ref({ show: false, message: '', type: 'success' })
+const triggerToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3500)
+}
 
 // Modal states
 const showResultModal = ref(false)
@@ -34,11 +42,7 @@ const latestResult = ref({
 
 const showDetailModal = ref(false)
 const selectedRecord = ref(null)
-
-// Feature Modals
 const showMatrixModal = ref(false)
-const showSensitivityModal = ref(false)
-const sensitivityProfitWeight = ref(4)
 
 // Baseline Alternatives Data
 const alternatives = [
@@ -48,14 +52,29 @@ const alternatives = [
   { name: 'Flexible Manufacturing Configuration', labor: 8,  cost: 1200000, space: 150, capacity: 45000, criteria: [90000, 1200000, 150, 10000] }
 ]
 
-// Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
-const runConstraintScreeningAndTopsis = (customWeights = null) => {
-  const wProfit = customWeights ? customWeights.profit : form.value.weight_profit
-  const wCost = customWeights ? customWeights.cost : form.value.weight_cost
-  const wSpace = customWeights ? customWeights.space : form.value.weight_space
-  const wCapacity = customWeights ? customWeights.capacity : form.value.weight_capacity
+// Preset Scenarios Applicator
+const applyPreset = (type) => {
+  if (type === 'balanced') {
+    form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
+  } else if (type === 'startup') {
+    form.value = { budget: 300000, labor: 10, space: 50, target_capacity: 5000, weight_profit: 3, weight_cost: 5, weight_space: 4, weight_capacity: 3 }
+  } else if (type === 'mass') {
+    form.value = { budget: 5000000, labor: 30, space: 200, target_capacity: 30000, weight_profit: 5, weight_cost: 2, weight_space: 2, weight_capacity: 5 }
+  }
+  triggerToast('Preset scenario applied successfully!', 'info')
+}
 
-  // Stage 1: Constraint-Based Screening
+// Smart Badge Helper
+const getAlternativeBadge = (name) => {
+  if (name.includes('Labor')) return { text: 'Lowest Investment', bg: '#dcfce7', color: '#166534' }
+  if (name.includes('Space-Efficient')) return { text: 'Space Saver', bg: '#e0f2fe', color: '#0369a1' }
+  if (name.includes('Machine-Oriented')) return { text: 'High Capacity', bg: '#fef3c7', color: '#92400e' }
+  if (name.includes('Flexible')) return { text: 'Max Output', bg: '#ede9fe', color: '#5b21b6' }
+  return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
+}
+
+// Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
+const runConstraintScreeningAndTopsis = () => {
   const feasible = alternatives.filter(alt => 
     alt.cost <= form.value.budget && 
     alt.space <= form.value.space && 
@@ -82,13 +101,12 @@ const runConstraintScreeningAndTopsis = (customWeights = null) => {
     }
   }
 
-  // Stage 2: TOPSIS Ranking Calculation
-  const sumWeights = wProfit + wCost + wSpace + wCapacity
+  const sumWeights = form.value.weight_profit + form.value.weight_cost + form.value.weight_space + form.value.weight_capacity
   const W = [
-    wProfit / sumWeights,
-    wCost / sumWeights,
-    wSpace / sumWeights,
-    wCapacity / sumWeights
+    form.value.weight_profit / sumWeights,
+    form.value.weight_cost / sumWeights,
+    form.value.weight_space / sumWeights,
+    form.value.weight_capacity / sumWeights
   ]
 
   const numCriteria = W.length
@@ -99,13 +117,11 @@ const runConstraintScreeningAndTopsis = (customWeights = null) => {
   })
   for (let j = 0; j < numCriteria; j++) divisors[j] = Math.sqrt(divisors[j])
 
-  // Normalized Matrix (r_ij)
   const normalizedMatrix = feasible.map(alt => ({
     name: alt.name,
     values: alt.criteria.map((val, j) => divisors[j] === 0 ? 0 : val / divisors[j])
   }))
 
-  // Weighted Normalized Matrix (v_ij = r_ij * W_j)
   const weightedMatrix = normalizedMatrix.map(row => ({
     name: row.name,
     values: row.values.map((val, j) => val * W[j])
@@ -129,7 +145,7 @@ const runConstraintScreeningAndTopsis = (customWeights = null) => {
   let resultsList = []
   let distanceDetails = []
 
-  weightedMatrix.forEach((row, i) => {
+  weightedMatrix.forEach((row) => {
     let sPlusSq = 0
     let sMinusSq = 0
     for (let j = 0; j < numCriteria; j++) {
@@ -150,7 +166,7 @@ const runConstraintScreeningAndTopsis = (customWeights = null) => {
   return {
     text: `${best.name} (TOPSIS Score: ${best.score.toFixed(4)})`,
     score: best.score.toFixed(4),
-    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${wProfit}, Cost: ${wCost}, Space: ${wSpace}, Capacity: ${wCapacity}).`,
+    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${form.value.weight_profit}, Cost: ${form.value.weight_cost}, Space: ${form.value.weight_space}, Capacity: ${form.value.weight_capacity}).`,
     rankings: resultsList,
     steps: {
       normalized: normalizedMatrix,
@@ -162,8 +178,9 @@ const runConstraintScreeningAndTopsis = (customWeights = null) => {
   }
 }
 
-// Database Operations
+// Database Operations with Smooth Loading & Toast
 const saveEvaluation = async () => {
+  isProcessing.value = true
   try {
     const resultObj = runConstraintScreeningAndTopsis()
     const recommendationResult = resultObj.text
@@ -180,9 +197,11 @@ const saveEvaluation = async () => {
       const { error } = await supabase.from('evaluations').update(payload).eq('id', editingId.value)
       if (error) throw error
       editingId.value = null
+      triggerToast('Record successfully updated!', 'success')
     } else {
       const { error } = await supabase.from('evaluations').insert([payload])
       if (error) throw error
+      triggerToast('New evaluation recorded successfully!', 'success')
     }
 
     latestResult.value = {
@@ -196,7 +215,11 @@ const saveEvaluation = async () => {
 
     resetForm()
     fetchEvaluations()
-  } catch (err) { alert('Error details: ' + (err.message || JSON.stringify(err))) }
+  } catch (err) { 
+    triggerToast('Error: ' + (err.message || JSON.stringify(err)), 'error') 
+  } finally {
+    isProcessing.value = false
+  }
 }
 
 const fetchEvaluations = async () => {
@@ -216,6 +239,7 @@ onMounted(() => fetchEvaluations())
 const editEvaluation = (item) => {
   form.value = { ...item, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
   editingId.value = item.id
+  triggerToast('Loaded record into editor form', 'info')
 }
 
 const deleteEvaluation = async (id) => {
@@ -224,12 +248,36 @@ const deleteEvaluation = async (id) => {
     const { error } = await supabase.from('evaluations').delete().eq('id', id)
     if (error) throw error
     fetchEvaluations()
-  } catch (err) {}
+    triggerToast('Record deleted successfully', 'success')
+  } catch (err) {
+    triggerToast('Failed to delete record', 'error')
+  }
+}
+
+const clearAllEvaluations = async () => {
+  if (!confirm('Are you sure you want to clear all evaluation records?')) return
+  try {
+    for (const item of evaluations.value) {
+      await supabase.from('evaluations').delete().eq('id', item.id)
+    }
+    fetchEvaluations()
+    triggerToast('All evaluation history cleared', 'success')
+  } catch (err) { 
+    triggerToast('Error clearing records', 'error') 
+  }
 }
 
 const viewDetails = (item) => {
   selectedRecord.value = item
   showDetailModal.value = true
+}
+
+const printSingleRecord = (item) => {
+  selectedRecord.value = item
+  showDetailModal.value = true
+  setTimeout(() => {
+    window.print()
+  }, 150)
 }
 
 const closeResultModal = () => {
@@ -253,15 +301,18 @@ const exportReport = () => {
 
 <template>
   <div class="app-container">
+    <!-- Toast Notification Popup -->
+    <div v-if="toast.show" :class="['toast-notification', toast.type]">
+      <span>{{ toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️' }}</span>
+      <span>{{ toast.message }}</span>
+    </div>
+
     <header class="header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <div>
         <h1>Seaweed Snack Production: DSS Configuration</h1>
         <p>Constraint Screening & True Euclidean TOPSIS Ranking</p>
       </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn btn-secondary" @click="showSensitivityModal = true" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600;">
-          📈 Sensitivity Analysis
-        </button>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;" class="no-print">
         <button class="btn btn-secondary" @click="exportReport" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1;">
           🖨️ Export Report
         </button>
@@ -269,7 +320,7 @@ const exportReport = () => {
     </header>
 
     <!-- Factory Alternatives Baseline Specifications Card -->
-    <div class="card" style="margin-bottom: 24px;">
+    <div class="card no-print" style="margin-bottom: 24px;">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
           <span>🏭</span> Factory Alternatives Baseline Specifications
@@ -296,7 +347,12 @@ const exportReport = () => {
           </thead>
           <tbody>
             <tr v-for="alt in alternatives" :key="alt.name" style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px; font-weight: 500; color: #1e293b;">{{ alt.name }}</td>
+              <td style="padding: 12px; font-weight: 500; color: #1e293b;">
+                {{ alt.name }}
+                <span :style="{ background: getAlternativeBadge(alt.name).bg, color: getAlternativeBadge(alt.name).color }" style="font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 600;">
+                  {{ getAlternativeBadge(alt.name).text }}
+                </span>
+              </td>
               <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.labor }}</td>
               <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.cost.toLocaleString() }}</td>
               <td style="padding: 12px; text-align: center; color: #475569;">{{ alt.space }}</td>
@@ -308,10 +364,15 @@ const exportReport = () => {
     </div>
 
     <!-- Input Constraints & Preferences Card -->
-    <div class="card form-card">
-      <div class="card-header">
+    <div class="card form-card no-print">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <h2>{{ editingId ? 'Edit System Configuration' : 'Input Constraints & Preferences' }}</h2>
-        <span v-if="editingId" class="badge badge-edit">Editing Mode</span>
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 12px; color: #64748b; font-weight: 600;">Quick Presets:</span>
+          <button @click="applyPreset('balanced')" style="background: #e0e7ff; color: #3730a3; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">⚖️ Balanced</button>
+          <button @click="applyPreset('startup')" style="background: #dcfce7; color: #166534; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🌱 Startup</button>
+          <button @click="applyPreset('mass')" style="background: #fef3c7; color: #92400e; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🚀 Mass Prod</button>
+        </div>
       </div>
       
       <div class="grid-2-col">
@@ -356,9 +417,14 @@ const exportReport = () => {
           </div>
         </div>
 
-        <!-- Stage 2: TOPSIS Preferences -->
+        <!-- Stage 2: TOPSIS Preferences with Tooltips -->
         <div class="form-section">
-          <h3>2. Business Preferences (1-5 Scale)</h3>
+          <h3>
+            2. Business Preferences (1-5 Scale)
+            <span class="tooltip-icon">ℹ️
+              <span class="tooltip-box">Weights are normalized and applied during the multicriteria aggregation stage.</span>
+            </span>
+          </h3>
           
           <div class="form-group">
             <div class="label-row">
@@ -393,23 +459,27 @@ const exportReport = () => {
               <span class="value-badge weight-badge">{{ form.weight_capacity }} / 5</span>
             </div>
             <input type="range" min="1" max="5" step="1" v-model.number="form.weight_capacity" />
-            <div class="range-labels"><span>Low (1)</span><span>High (5)</span></div>
+            <div class="range-labels"><span>Low (1)</span><span>5 (High)</span></div>
           </div>
         </div>
       </div>
 
-      <div class="form-actions">
-        <button class="btn btn-primary" @click="saveEvaluation">
-          {{ editingId ? 'Update & Re-run Engine' : 'Run Decision Engine' }}
+      <div class="form-actions" style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-primary" @click="saveEvaluation" :disabled="isProcessing" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span v-if="isProcessing" class="spinner"></span>
+          <span>{{ isProcessing ? 'Processing Engine...' : (editingId ? 'Update & Re-run Engine' : 'Run Decision Engine') }}</span>
         </button>
-        <button v-if="editingId" class="btn btn-secondary" @click="resetForm">
-          Cancel Edit
+        <button class="btn btn-secondary" @click="resetForm" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+          Reset Defaults
+        </button>
+        <button v-if="editingId" class="btn btn-secondary" @click="resetForm" style="flex: 1;">
+          Cancel
         </button>
       </div>
     </div>
 
     <!-- Dynamic Comparative Evaluation & TOPSIS Ranking Results Card -->
-    <div class="card" style="margin-bottom: 24px;">
+    <div class="card no-print" style="margin-bottom: 24px;">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
           <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
@@ -418,8 +488,9 @@ const exportReport = () => {
           <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #e0e7ff; color: #3730a3; border: none; border-radius: 20px; font-weight: 600; cursor: pointer;">
             🔍 View Matrix Breakdown
           </button>
-          <span style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0;">
+          <span class="tooltip-target" style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0; cursor: help;">
             ✨ Real-time Multi-Criteria Ranking (Ci)
+            <span class="tooltip-box">Closeness Coefficient (Ci): Measures relative closeness to the ideal best solution. Range [0, 1]. Higher is better.</span>
           </span>
         </div>
       </div>
@@ -436,8 +507,13 @@ const exportReport = () => {
           { name: 'Space-Efficient Layout Configuration', score: 0.580 },
           { name: 'Labor-Oriented Configuration', score: 0.410 }
         ])" :key="item.name" style="background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-            <span style="font-weight: 600; color: #1e293b;">{{ index + 1 }}. {{ item.name }}</span>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; align-items: center; flex-wrap: wrap;">
+            <span style="font-weight: 600; color: #1e293b;">
+              {{ index + 1 }}. {{ item.name }}
+              <span :style="{ background: getAlternativeBadge(item.name).bg, color: getAlternativeBadge(item.name).color }" style="font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: 600;">
+                {{ getAlternativeBadge(item.name).text }}
+              </span>
+            </span>
             <span style="font-weight: 700; color: #4f46e5;">Ci = {{ (item.score || 0).toFixed(3) }} (Rank #{{ index + 1 }})</span>
           </div>
           <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
@@ -448,9 +524,12 @@ const exportReport = () => {
     </div>
 
     <!-- Evaluation Records Section (Limited to 5 latest records) -->
-    <div class="card">
-      <div class="card-header">
-        <h2>Evaluation Records (Latest 5)</h2>
+    <div class="card no-print">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0;">Evaluation Records (Latest 5)</h2>
+        <button v-if="evaluations.length > 0" @click="clearAllEvaluations" style="background: #fee2e2; color: #991b1b; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          Clear History
+        </button>
       </div>
       <div class="table-responsive">
         <table class="data-table">
@@ -477,6 +556,7 @@ const exportReport = () => {
                 </span>
               </td>
               <td class="action-cell">
+                <button class="btn-icon btn-print" @click="printSingleRecord(item)" style="background: #e0e7ff; color: #3730a3; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px; font-weight: 600;">Print</button>
                 <button class="btn-icon btn-view" @click="viewDetails(item)">View</button>
                 <button class="btn-icon btn-edit" @click="editEvaluation(item)">Edit</button>
                 <button class="btn-icon btn-delete" @click="deleteEvaluation(item.id)">Del</button>
@@ -491,7 +571,7 @@ const exportReport = () => {
     </div>
 
     <!-- 1. Result Popup Modal (Triggered on Run) -->
-    <div v-if="showResultModal" class="modal-overlay" @click.self="closeResultModal">
+    <div v-if="showResultModal" class="modal-overlay no-print" @click.self="closeResultModal">
       <div class="modal-content animate-pop">
         <div class="modal-icon-header">
           <span class="success-dot"></span>
@@ -513,10 +593,18 @@ const exportReport = () => {
       </div>
     </div>
 
-    <!-- 2. Detail Popup Modal (Triggered on View button) -->
-    <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal">
-      <div class="modal-content">
-        <h3>Evaluation Record Details</h3>
+    <!-- 2. Detail Popup Modal (Used for Viewing & Printing Individual Records) -->
+    <div v-if="showDetailModal" class="modal-overlay printable-modal-overlay" @click.self="closeDetailModal">
+      <div class="modal-content printable-modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" class="no-print">
+          <h3 style="margin: 0;">Evaluation Record Report</h3>
+          <button @click="closeDetailModal" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <h3 class="print-only-title" style="display: none; margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+          Seaweed Snack Production - Evaluation Report
+        </h3>
+
         <div v-if="selectedRecord" class="modal-body">
           <p><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
           <p><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
@@ -525,14 +613,16 @@ const exportReport = () => {
           <p><strong>Recommended Configuration:</strong> <span style="color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</span></p>
           <p><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="closeDetailModal">Close</button>
+
+        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+          <button class="btn btn-primary no-print" @click="window.print()" style="flex: 1;">🖨️ Print This Record</button>
+          <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1;">Close</button>
         </div>
       </div>
     </div>
 
-    <!-- 3. Transparent TOPSIS Matrix Breakdown Modal -->
-    <div v-if="showMatrixModal" class="modal-overlay" @click.self="showMatrixModal = false">
+    <!-- 3. Transparent TOPSIS Matrix Breakdown Modal with Tooltips -->
+    <div v-if="showMatrixModal" class="modal-overlay no-print" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 800px; width: 95%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
           <h3 style="margin: 0;">📐 TOPSIS Step-by-Step Mathematical Breakdown</h3>
@@ -545,7 +635,12 @@ const exportReport = () => {
           </p>
 
           <div v-if="latestResult.steps && latestResult.steps.weighted && latestResult.steps.weighted.length > 0">
-            <h4 style="color: #1e293b; margin-bottom: 8px;">1. Weighted Normalized Decision Matrix (v_ij)</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">
+              1. Weighted Normalized Decision Matrix 
+              <span class="tooltip-target" style="font-size: 11px; color: #4f46e5; cursor: help;">(v_ij)
+                <span class="tooltip-box">Calculated by multiplying the normalized decision matrix r_ij by each criterion weight W_j.</span>
+              </span>
+            </h4>
             <div style="overflow-x: auto; margin-bottom: 20px;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
                 <thead>
@@ -569,13 +664,23 @@ const exportReport = () => {
               </table>
             </div>
 
-            <h4 style="color: #1e293b; margin-bottom: 8px;">2. Ideal Best (A+) and Ideal Worst (A-) Solutions</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">
+              2. Ideal Best (A+) and Ideal Worst (A-) Solutions
+              <span class="tooltip-target" style="font-size: 11px; color: #4f46e5; cursor: help;">(?)
+                <span class="tooltip-box">A+ represents the maximum benefit / minimum cost values across alternatives. A- represents the opposite.</span>
+              </span>
+            </h4>
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px;">
               <p><strong>A+ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
               <p style="margin-top: 6px;"><strong>A- (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
             </div>
 
-            <h4 style="color: #1e293b; margin-bottom: 8px;">3. Euclidean Separation Measures & Closeness Coefficients (Ci)</h4>
+            <h4 style="color: #1e293b; margin-bottom: 8px;">
+              3. Euclidean Separation Measures & Closeness Coefficients (Ci)
+              <span class="tooltip-target" style="font-size: 11px; color: #4f46e5; cursor: help;">(?)
+                <span class="tooltip-box">Euclidean distance S+ (to best) and S- (to worst) are used to compute Ci = S- / (S+ + S-).</span>
+              </span>
+            </h4>
             <div style="overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
                 <thead>
@@ -607,54 +712,129 @@ const exportReport = () => {
         </div>
       </div>
     </div>
-
-    <!-- 4. Interactive Sensitivity Analysis Modal with Slider -->
-    <div v-if="showSensitivityModal" class="modal-overlay" @click.self="showSensitivityModal = false">
-      <div class="modal-content" style="max-width: 750px; width: 95%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0;">📈 Interactive Sensitivity Analysis (Live Weight Perturbation)</h3>
-          <button @click="showSensitivityModal = false" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
-        </div>
-        
-        <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
-          <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">
-            Drag the slider below to dynamically adjust the <strong>Profit Weight</strong> and observe how the TOPSIS scores (Ci) and alternative rankings shift in real-time.
-          </p>
-
-          <!-- Interactive Slider Control -->
-          <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <label style="font-weight: 600; font-size: 14px; color: #1e293b;">Adjust Profit Weight (W_profit):</label>
-              <span style="background: #4f46e5; color: white; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">
-                {{ sensitivityProfitWeight }} / 5
-              </span>
-            </div>
-            <input type="range" min="1" max="5" step="1" v-model.number="sensitivityProfitWeight" style="width: 100%; cursor: pointer;" />
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-top: 4px;">
-              <span>1 (Low Importance)</span>
-              <span>5 (Maximum Importance)</span>
-            </div>
-          </div>
-
-          <!-- Live Ranking Results based on Slider -->
-          <h4 style="color: #1e293b; margin-bottom: 12px;">Live Evaluation Results for W_profit = {{ sensitivityProfitWeight }}</h4>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div v-for="(item, index) in runConstraintScreeningAndTopsis({ profit: sensitivityProfitWeight, cost: form.weight_cost, space: form.weight_space, capacity: form.weight_capacity }).rankings" :key="item.name" style="background: #ffffff; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <span style="font-weight: 600; color: #1e293b; font-size: 14px;">{{ index + 1 }}. {{ item.name }}</span>
-              </div>
-              <div style="text-align: right;">
-                <span style="font-weight: 700; color: #4f46e5; font-size: 14px;">Ci = {{ item.score.toFixed(4) }}</span>
-                <span style="font-size: 11px; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 600;">Rank #{{ index + 1 }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions" style="margin-top: 20px;">
-          <button class="btn btn-secondary" @click="showSensitivityModal = false" style="width: 100%;">Close Sensitivity Analysis</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
+
+<style>
+/* Toast Notification Styles */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: #1e293b;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideInUp 0.3s ease;
+}
+.toast-notification.success { background: #065f46; border-left: 4px solid #34d399; }
+.toast-notification.error { background: #991b1b; border-left: 4px solid #f87171; }
+.toast-notification.info { background: #1e40af; border-left: 4px solid #60a5fa; }
+
+@keyframes slideInUp {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Spinner for Loading State */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tooltip Styles */
+.tooltip-target {
+  position: relative;
+  display: inline-block;
+}
+.tooltip-target .tooltip-box, .tooltip-icon .tooltip-box {
+  visibility: hidden;
+  width: 240px;
+  background-color: #1e293b;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 50;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 11px;
+  font-weight: normal;
+  line-height: 1.4;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+.tooltip-target:hover .tooltip-box, .tooltip-icon:hover .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+}
+.tooltip-icon {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  margin-left: 4px;
+}
+
+/* Clean Print Styling: Print only the active evaluation record cleanly */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  
+  .printable-modal-overlay, 
+  .printable-modal-overlay * {
+    visibility: visible !important;
+  }
+
+  .printable-modal-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: white !important;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 40px;
+  }
+
+  .printable-modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  .print-only-title {
+    display: block !important;
+    font-size: 20px;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+</style>
