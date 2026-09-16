@@ -689,12 +689,12 @@ const resetForm = () => {
         </div>
 
         <!-- Professional Print Header -->
-        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 3px; margin-bottom: 4px;">
-          <h2 style="margin: 0; font-size: 11px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
-          <p style="margin: 1px 0 0 0; font-size: 9px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
+        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 4px; margin-bottom: 6px;">
+          <h2 style="margin: 0; font-size: 13px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
+          <p style="margin: 1px 0 0 0; font-size: 10px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
         </div>
 
-        <div v-if="selectedRecord" class="printable-report-body" style="font-size: 12px; display: flex; flex-direction: column; gap: 6px; color: #334155;">
+        <div v-if="selectedRecord" class="printable-report-body" style="font-size: 12px; display: flex; flex-direction: column; gap: 8px; color: #334155;">
           
           <!-- Section 1: Inputs with robust CSS Grid -->
           <div class="report-section-box" style="background: #f8fafc; padding: 6px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
@@ -1047,18 +1047,18 @@ const resetForm = () => {
   font-size: 11px;
 }
 
-/* Professional Print Media Formatting: Strict Single Page A4 Output */
+/* Professional Print Media Formatting: Expanded Single-Page Layout (Pushed Up & Filled) */
 @media print {
   @page {
     size: A4;
-    margin: 4mm 6mm;
+    margin: 8mm 10mm;
   }
   
   body, html {
     background: white !important;
     color: #000 !important;
-    height: auto !important;
-    overflow: visible !important;
+    height: 100% !important;
+    overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -1073,10 +1073,12 @@ const resetForm = () => {
   }
 
   .printable-modal-overlay {
-    position: static !important;
-    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
     background: white !important;
+    display: block !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -1096,48 +1098,54 @@ const resetForm = () => {
 
   .print-only-title {
     display: block !important;
+    margin-bottom: 6px !important;
   }
 
   .no-print {
     display: none !important;
   }
 
+  /* Expand layout to fill top and bottom naturally */
+  .printable-report-body {
+    gap: 8px !important;
+  }
+
   .report-section-box {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 3px !important;
-    padding: 4px 6px !important;
-    border: 1px solid #94a3b8 !important;
+    margin-bottom: 6px !important;
+    padding: 8px 10px !important;
+    border: 1px solid #64748b !important;
     background: #ffffff !important;
   }
 
   .report-title {
-    font-size: 10px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
     color: #000 !important;
-    margin: 0 0 2px 0 !important;
+    margin: 0 0 4px 0 !important;
   }
 
   .snapshot-grid-box {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 2px !important;
-    font-size: 9px !important;
+    gap: 4px !important;
+    font-size: 10px !important;
   }
 
   .report-timestamp {
-    font-size: 8px !important;
-    margin-top: 2px !important;
+    font-size: 9px !important;
+    margin-top: 3px !important;
   }
 
   .report-highlight-text {
-    font-size: 10px !important;
+    font-size: 11px !important;
   }
 
   .report-data-table th, 
   .report-data-table td {
-    padding: 2px 4px !important;
-    font-size: 9px !important;
+    padding: 3px 6px !important;
+    font-size: 10px !important;
     border: 1px solid #cbd5e1 !important;
   }
 
@@ -1148,18 +1156,18 @@ const resetForm = () => {
   }
 
   .math-step-item {
-    font-size: 9px !important;
-    margin-bottom: 2px !important;
+    font-size: 10px !important;
+    margin-bottom: 4px !important;
   }
 
   .math-code-box {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
-    padding: 2px 4px !important;
+    padding: 3px 6px !important;
     font-family: monospace !important;
-    font-size: 9px !important;
-    border-radius: 2px !important;
-    margin-top: 1px !important;
+    font-size: 10px !important;
+    border-radius: 3px !important;
+    margin-top: 2px !important;
   }
 }
 </style>
