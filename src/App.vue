@@ -100,7 +100,7 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
-// Universal Comprehensive Engine for any set of inputs/weights (used for historical records and live reports)
+// Universal Comprehensive Engine for any set of inputs/weights
 const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s: 3, cap: 5 }) => {
   const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
   
@@ -638,7 +638,7 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- 2. Detail Popup Modal & Comprehensive Printable Report -->
+    <!-- 2. Detail Popup Modal & Professional Printable Report -->
     <div v-if="showDetailModal" class="modal-overlay printable-modal-overlay" @click.self="closeDetailModal">
       <div class="modal-content printable-modal-content" style="max-width: 820px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
@@ -646,108 +646,106 @@ const resetForm = () => {
           <button @click="closeDetailModal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
         </div>
 
-        <!-- Print-Only Header -->
-        <div class="print-only-title" style="display: none; margin-bottom: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 10px;">
-          <h2 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">Seaweed Snack Production Technology Licensing DSS</h2>
-          <p style="margin: 4px 0 0 0; font-size: 13px; color: #475569;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
+        <!-- Professional Print Header -->
+        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 style="margin: 0; font-size: 16px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
+          <p style="margin: 2px 0 0 0; font-size: 14px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
+          <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
         </div>
 
-        <div v-if="selectedRecord" class="modal-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 20px; color: #334155;">
+        <div v-if="selectedRecord" class="modal-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 16px; color: #334155;">
           
           <!-- Section 1: Inputs -->
-          <div style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+          <div class="print-card-box" style="background: #f8fafc; padding: 12px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 12px;">
               <p style="margin: 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
               <p style="margin: 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
               <p style="margin: 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</p>
               <p style="margin: 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
             </div>
-            <p style="font-size: 11px; color: #64748b; margin-top: 8px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+            <p style="font-size: 10px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
           <!-- Section 2: Recommendation -->
-          <div>
-            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">2. Final Recommended Configuration</h4>
-            <p style="font-size: 14px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
+          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
+            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
           </div>
 
           <!-- Section 3: Rankings Table -->
-          <div>
-            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
               <thead>
-                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; color: #475569;">
-                  <th style="padding: 8px;">Rank</th>
-                  <th style="padding: 8px;">Alternative Configuration</th>
-                  <th style="padding: 8px; text-align: right;">Ci Score</th>
+                <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
+                  <th style="padding: 5px;">Rank</th>
+                  <th style="padding: 5px;">Alternative Configuration</th>
+                  <th style="padding: 5px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(r, idx) in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 8px; font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td style="padding: 8px; font-weight: 500;">{{ r.name }}</td>
-                  <td style="padding: 8px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                  <td style="padding: 5px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 5px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 5px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- Section 4: Full Step-by-Step Mathematical Derivation (Included in Print!) -->
-          <div style="border-top: 2px dashed #cbd5e1; padding-top: 16px;">
-            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
+          <!-- Section 4: Full Step-by-Step Mathematical Derivation -->
+          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
             
-            <!-- Step 1 & 2: Divisors & Normalization -->
-            <div style="margin-bottom: 12px;">
-              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Step 2: Vector Normalization Divisors (RMS)</p>
-              <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 11px;">
+            <div style="margin-bottom: 8px; font-size: 11px;">
+              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569;">Step 2: Vector Normalization Divisors (RMS Denominators)</p>
+              <div style="background: #f8fafc; padding: 4px 8px; border-radius: 4px; font-family: monospace; border: 1px solid #e2e8f0;">
                 [ {{ calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
               </div>
             </div>
 
-            <!-- Step 3: Weighted Matrix -->
-            <div style="margin-bottom: 12px;" v-if="calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted.length > 0">
-              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Step 3: Weighted Normalized Matrix (v_ij)</p>
-              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+            <div style="margin-bottom: 8px;" v-if="calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted.length > 0">
+              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 11px;">Step 3: Weighted Normalized Matrix (v_ij)</p>
+              <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 6px;">Configuration</th>
-                    <th style="padding: 6px; text-align: center;">v_i1 (Profit)</th>
-                    <th style="padding: 6px; text-align: center;">v_i2 (Cost)</th>
-                    <th style="padding: 6px; text-align: center;">v_i3 (Space)</th>
-                    <th style="padding: 6px; text-align: center;">v_i4 (Capacity)</th>
+                    <th style="padding: 4px;">Configuration</th>
+                    <th style="padding: 4px; text-align: center;">v_i1 (Profit)</th>
+                    <th style="padding: 4px; text-align: center;">v_i2 (Cost)</th>
+                    <th style="padding: 4px; text-align: center;">v_i3 (Space)</th>
+                    <th style="padding: 4px; text-align: center;">v_i4 (Capacity)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="row in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 6px; font-weight: 500;">{{ row.name }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                    <td style="padding: 4px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <!-- Step 4, 5, 6: Ideal Best/Worst & Distances -->
             <div>
-              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</p>
-              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 11px;">Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</p>
+              <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 6px;">Configuration</th>
-                    <th style="padding: 6px; text-align: center;">S⁺ (Dist. Best)</th>
-                    <th style="padding: 6px; text-align: center;">S⁻ (Dist. Worst)</th>
-                    <th style="padding: 6px; text-align: center;">Ci Score</th>
+                    <th style="padding: 4px;">Configuration</th>
+                    <th style="padding: 4px; text-align: center;">S⁺ (Dist. Best)</th>
+                    <th style="padding: 4px; text-align: center;">S⁻ (Dist. Worst)</th>
+                    <th style="padding: 4px; text-align: center;">Ci Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="d in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 6px; font-weight: 500;">{{ d.name }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
-                    <td style="padding: 6px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
-                    <td style="padding: 6px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                    <td style="padding: 4px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 4px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 4px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -757,7 +755,7 @@ const resetForm = () => {
 
         </div>
 
-        <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white; padding: 10px; font-weight: 600;">📥 Load to Dashboard</button>
           <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print Complete Report</button>
           <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1; padding: 10px;">Close</button>
@@ -994,8 +992,20 @@ const resetForm = () => {
   margin-left: 4px;
 }
 
-/* Clean Print Styling: Print formal comprehensive report cleanly */
+/* Professional Print Media Formatting: Clean A4 Output without Blank Pages */
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm 12mm;
+  }
+  
+  body, html {
+    background: white !important;
+    color: #000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   body * {
     visibility: hidden !important;
   }
@@ -1006,12 +1016,13 @@ const resetForm = () => {
   }
 
   .printable-modal-overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
     background: white !important;
     display: block !important;
+    z-index: 99999 !important;
   }
 
   .printable-modal-content {
@@ -1020,7 +1031,7 @@ const resetForm = () => {
     width: 100% !important;
     max-width: 100% !important;
     background: white !important;
-    padding: 10px !important;
+    padding: 0 !important;
     margin: 0 !important;
     max-height: none !important;
     overflow: visible !important;
@@ -1032,6 +1043,19 @@ const resetForm = () => {
 
   .no-print {
     display: none !important;
+  }
+
+  .print-card-box {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 10px !important;
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+  }
+
+  table {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 </style>
