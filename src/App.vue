@@ -100,7 +100,7 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
-// Universal Comprehensive Engine with Strict Descending Sort for Rankings
+// Universal Comprehensive Engine
 const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s: 3, cap: 5 }) => {
   const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
   
@@ -175,7 +175,6 @@ const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s
     distanceDetails.push({ name: row.name, sPlus: S_plus, sMinus: S_minus, score: C_i })
   })
 
-  // Strictly sort descending by Ci score so highest score is always Rank #1
   resultsList.sort((a, b) => b.score - a.score)
   distanceDetails.sort((a, b) => b.score - a.score)
 
@@ -199,7 +198,7 @@ const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s
   }
 }
 
-// Helper to get engine results for historical records using current form or record weights if available
+// Helper to get engine results for historical records
 const getRecordEngine = (record) => {
   if (!record) return { rankings: [], steps: { divisors: [], weighted: [], distances: [] } }
   return calculateDetailedEngine(
@@ -215,7 +214,7 @@ const getRecordEngine = (record) => {
   )
 }
 
-// Database Operations supporting weights if present in record
+// Database Operations
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
@@ -237,12 +236,10 @@ const saveEvaluation = async () => {
     }
 
     let error = null
-    // Try saving with weights first
     let res = await supabase.from('evaluations').insert([payload])
     error = res.error
 
     if (error && error.message && error.message.includes('column')) {
-      // Fallback if weight columns are not yet in Supabase table
       const fallbackPayload = {
         budget: currentInputSnapshot.budget,
         labor: currentInputSnapshot.labor,
@@ -692,107 +689,107 @@ const resetForm = () => {
         </div>
 
         <!-- Professional Print Header -->
-        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px;">
-          <h2 style="margin: 0; font-size: 16px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
-          <p style="margin: 2px 0 0 0; font-size: 14px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
-          <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
+        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 8px; margin-bottom: 12px;">
+          <h2 style="margin: 0; font-size: 15px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
+          <p style="margin: 2px 0 0 0; font-size: 13px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
+          <p style="margin: 2px 0 0 0; font-size: 10px; color: #64748b;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
         </div>
 
-        <div v-if="selectedRecord" class="modal-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 16px; color: #334155;">
+        <div v-if="selectedRecord" class="modal-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 14px; color: #334155;">
           
           <!-- Section 1: Inputs -->
-          <div class="print-card-box" style="background: #f8fafc; padding: 12px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 12px;">
+          <div class="print-card-box" style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 11px;">
               <p style="margin: 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
               <p style="margin: 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
               <p style="margin: 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</p>
               <p style="margin: 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
             </div>
-            <p style="font-size: 10px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+            <p style="font-size: 9px; color: #64748b; margin-top: 4px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
           <!-- Section 2: Recommendation -->
-          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
-            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">
+          <div class="print-card-box" style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
+            <p style="font-size: 12px; margin: 0; color: #2563eb; font-weight: bold;">
               {{ selectedRecord.recommended_config }}
             </p>
           </div>
 
           <!-- Section 3: Rankings Table -->
-          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
+          <div class="print-card-box" style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
             <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
               <thead>
                 <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
-                  <th style="padding: 5px;">Rank</th>
-                  <th style="padding: 5px;">Alternative Configuration</th>
-                  <th style="padding: 5px; text-align: right;">Ci Score</th>
+                  <th style="padding: 4px;">Rank</th>
+                  <th style="padding: 4px;">Alternative Configuration</th>
+                  <th style="padding: 4px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(r, idx) in getRecordEngine(selectedRecord).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 5px; font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td style="padding: 5px; font-weight: 500;">{{ r.name }}</td>
-                  <td style="padding: 5px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                  <td style="padding: 4px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 4px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 4px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Section 4: Full Step-by-Step Mathematical Derivation -->
-          <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
+          <div class="print-card-box" style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
             
-            <div style="margin-bottom: 8px; font-size: 11px;">
+            <div style="margin-bottom: 6px; font-size: 10px;">
               <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569;">Step 2: Vector Normalization Divisors (RMS Denominators)</p>
-              <div style="background: #f8fafc; padding: 4px 8px; border-radius: 4px; font-family: monospace; border: 1px solid #e2e8f0;">
+              <div style="background: #f8fafc; padding: 3px 6px; border-radius: 4px; font-family: monospace; border: 1px solid #e2e8f0;">
                 [ {{ getRecordEngine(selectedRecord).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
               </div>
             </div>
 
-            <div style="margin-bottom: 8px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
-              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 11px;">Step 3: Weighted Normalized Matrix (v_ij)</p>
+            <div style="margin-bottom: 6px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
+              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 10px;">Step 3: Weighted Normalized Matrix (v_ij)</p>
               <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 4px;">Configuration</th>
-                    <th style="padding: 4px; text-align: center;">v_i1 (Profit)</th>
-                    <th style="padding: 4px; text-align: center;">v_i2 (Cost)</th>
-                    <th style="padding: 4px; text-align: center;">v_i3 (Space)</th>
-                    <th style="padding: 4px; text-align: center;">v_i4 (Capacity)</th>
+                    <th style="padding: 3px;">Configuration</th>
+                    <th style="padding: 3px; text-align: center;">v_i1 (Profit)</th>
+                    <th style="padding: 3px; text-align: center;">v_i2 (Cost)</th>
+                    <th style="padding: 3px; text-align: center;">v_i3 (Space)</th>
+                    <th style="padding: 3px; text-align: center;">v_i4 (Capacity)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="row in getRecordEngine(selectedRecord).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 4px; font-weight: 500;">{{ row.name }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                    <td style="padding: 3px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <div>
-              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 11px;">Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</p>
+              <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 10px;">Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</p>
               <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 4px;">Configuration</th>
-                    <th style="padding: 4px; text-align: center;">S⁺ (Dist. Best)</th>
-                    <th style="padding: 4px; text-align: center;">S⁻ (Dist. Worst)</th>
-                    <th style="padding: 4px; text-align: center;">Ci Score</th>
+                    <th style="padding: 3px;">Configuration</th>
+                    <th style="padding: 3px; text-align: center;">S⁺ (Dist. Best)</th>
+                    <th style="padding: 3px; text-align: center;">S⁻ (Dist. Worst)</th>
+                    <th style="padding: 3px; text-align: center;">Ci Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="d in getRecordEngine(selectedRecord).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 4px; font-weight: 500;">{{ d.name }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
-                    <td style="padding: 4px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
-                    <td style="padding: 4px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                    <td style="padding: 3px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -802,7 +799,7 @@ const resetForm = () => {
 
         </div>
 
-        <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="modal-actions" style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white; padding: 10px; font-weight: 600;">📥 Load to Dashboard</button>
           <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print Complete Report</button>
           <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1; padding: 10px;">Close</button>
@@ -1039,11 +1036,11 @@ const resetForm = () => {
   margin-left: 4px;
 }
 
-/* Professional Print Media Formatting: Clean A4 Output without Blank Pages */
+/* Professional Print Media Formatting: Clean A4 Output (Single Page) */
 @media print {
   @page {
     size: A4;
-    margin: 8mm 10mm;
+    margin: 5mm 8mm;
   }
   
   body, html {
@@ -1051,6 +1048,8 @@ const resetForm = () => {
     color: #000 !important;
     height: auto !important;
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   body * {
@@ -1063,13 +1062,15 @@ const resetForm = () => {
   }
 
   .printable-modal-overlay {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
     width: 100% !important;
     background: white !important;
     display: block !important;
     z-index: 99999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .printable-modal-content {
@@ -1095,7 +1096,7 @@ const resetForm = () => {
   .print-card-box {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 8px !important;
+    margin-bottom: 6px !important;
     border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
   }
