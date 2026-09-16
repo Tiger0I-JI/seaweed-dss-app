@@ -988,7 +988,6 @@ const resetForm = () => {
 }
 
 /* Clean Print Styling: Print formal evaluation report cleanly */
-@previous print { ... }
 @media print {
   body * {
     visibility: hidden !important;
