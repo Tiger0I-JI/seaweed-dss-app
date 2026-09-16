@@ -695,105 +695,109 @@ const resetForm = () => {
           <p style="margin: 1px 0 0 0; font-size: 8px; color: #64748b;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
         </div>
 
-        <div v-if="selectedRecord" class="printable-report-body">
+        <div v-if="selectedRecord" class="printable-report-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 10px; color: #334155;">
           
           <!-- Section 1: Inputs -->
-          <div class="report-section-box">
-            <h4 class="report-title">1. Input Resource Constraints Snapshot</h4>
-            <table class="report-table-grid">
+          <div class="report-section-box" style="background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+            <table class="report-table-grid" style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <tr>
-                <td><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</td>
-                <td><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</td>
+                <td style="padding: 2px 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</td>
+                <td style="padding: 2px 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</td>
               </tr>
               <tr>
-                <td><strong>Available Space:</strong> {{ selectedRecord.space }} m²</td>
-                <td><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</td>
+                <td style="padding: 2px 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</td>
+                <td style="padding: 2px 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</td>
               </tr>
             </table>
-            <div class="report-timestamp">Timestamp: {{ new Date(selectedRecord.created_at).toLocaleString() }}</div>
+            <div class="report-timestamp" style="font-size: 9px; color: #64748b; margin-top: 4px;">Timestamp: {{ new Date(selectedRecord.created_at).toLocaleString() }}</div>
           </div>
 
           <!-- Section 2: Recommendation -->
-          <div class="report-section-box">
-            <h4 class="report-title">2. Final Recommended Configuration</h4>
-            <div class="report-highlight-text">{{ selectedRecord.recommended_config }}</div>
+          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
+            <p class="report-highlight-text" style="font-size: 12px; margin: 0; color: #2563eb; font-weight: bold;">
+              {{ selectedRecord.recommended_config }}
+            </p>
           </div>
 
           <!-- Section 3: Rankings Table -->
-          <div class="report-section-box">
-            <h4 class="report-title">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
-            <table class="report-data-table">
+          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
+            <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
               <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Alternative Configuration</th>
-                  <th style="text-align: right;">Ci Score</th>
+                <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
+                  <th style="padding: 4px;">Rank</th>
+                  <th style="padding: 4px;">Alternative Configuration</th>
+                  <th style="padding: 4px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(r, idx) in getRecordEngine(selectedRecord).rankings" :key="r.name">
-                  <td style="font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td>{{ r.name }}</td>
-                  <td style="text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                <tr v-for="(r, idx) in getRecordEngine(selectedRecord).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 4px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 4px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 4px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- Section 4: Mathematical Breakdown -->
-          <div class="report-section-box">
-            <h4 class="report-title">4. TOPSIS Mathematical Derivation Breakdown</h4>
+          <!-- Section 4: Full Step-by-Step Mathematical Derivation -->
+          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
             
-            <div class="math-step-item">
+            <div class="math-step-item" style="margin-bottom: 4px; font-size: 11px;">
               <strong>Step 1: Constraint Screening Result</strong> — Passed: {{ getRecordEngine(selectedRecord).steps.feasibleCount || 4 }} out of 4 feasible configurations.
             </div>
 
-            <div class="math-step-item">
-              <strong>Step 2: Vector Normalization Divisors (RMS)</strong>
-              <div class="math-code-box">[ {{ getRecordEngine(selectedRecord).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]</div>
+            <div class="math-step-item" style="margin-bottom: 4px; font-size: 11px;">
+              <strong>Step 2: Vector Normalization Divisors (RMS Denominators)</strong>
+              <div class="math-code-box" style="background: #f8fafc; padding: 3px 6px; border-radius: 3px; font-family: monospace; border: 1px solid #e2e8f0; margin-top: 2px;">
+                [ {{ getRecordEngine(selectedRecord).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
+              </div>
             </div>
 
-            <div class="math-step-item" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
+            <div class="math-step-item" style="margin-bottom: 4px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
               <strong>Step 3: Weighted Normalized Matrix (v_ij)</strong>
-              <table class="report-data-table" style="margin-top: 3px;">
+              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; margin-top: 3px;">
                 <thead>
-                  <tr>
-                    <th>Configuration</th>
-                    <th style="text-align: center;">v1 (Profit)</th>
-                    <th style="text-align: center;">v2 (Cost)</th>
-                    <th style="text-align: center;">v3 (Space)</th>
-                    <th style="text-align: center;">v4 (Capacity)</th>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 3px;">Configuration</th>
+                    <th style="padding: 3px; text-align: center;">v1 (Profit)</th>
+                    <th style="padding: 3px; text-align: center;">v2 (Cost)</th>
+                    <th style="padding: 3px; text-align: center;">v3 (Space)</th>
+                    <th style="padding: 3px; text-align: center;">v4 (Capacity)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in getRecordEngine(selectedRecord).steps.weighted" :key="row.name">
-                    <td>{{ row.name }}</td>
-                    <td style="text-align: center;">{{ row.values[0].toFixed(4) }}</td>
-                    <td style="text-align: center;">{{ row.values[1].toFixed(4) }}</td>
-                    <td style="text-align: center;">{{ row.values[2].toFixed(4) }}</td>
-                    <td style="text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                  <tr v-for="row in getRecordEngine(selectedRecord).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 3px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="math-step-item">
-              <strong>Steps 4-6: Euclidean Distances & Final Ci Scores</strong>
-              <table class="report-data-table" style="margin-top: 3px;">
+            <div class="math-step-item" style="font-size: 11px;">
+              <strong>Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</strong>
+              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; margin-top: 3px;">
                 <thead>
-                  <tr>
-                    <th>Configuration</th>
-                    <th style="text-align: center;">S+ (Best)</th>
-                    <th style="text-align: center;">S- (Worst)</th>
-                    <th style="text-align: center;">Ci Score</th>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 3px;">Configuration</th>
+                    <th style="padding: 3px; text-align: center;">S⁺ (Best)</th>
+                    <th style="padding: 3px; text-align: center;">S⁻ (Worst)</th>
+                    <th style="padding: 3px; text-align: center;">Ci Score</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="d in getRecordEngine(selectedRecord).steps.distances" :key="d.name">
-                    <td>{{ d.name }}</td>
-                    <td style="text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
-                    <td style="text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
-                    <td style="text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                  <tr v-for="d in getRecordEngine(selectedRecord).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 3px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 3px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1040,11 +1044,11 @@ const resetForm = () => {
   margin-left: 4px;
 }
 
-/* Professional Print Stylesheet: Uniform Typography & Strict Single Page A4 Output */
+/* Professional Print Media Formatting: Strict Single Page A4 Output */
 @media print {
   @page {
     size: A4;
-    margin: 6mm 8mm;
+    margin: 5mm 8mm;
   }
   
   body, html {
@@ -1095,21 +1099,13 @@ const resetForm = () => {
     display: none !important;
   }
 
-  /* Unified Uniform Styles for Printable Report */
-  .printable-report-body {
-    font-size: 10px !important;
-    line-height: 1.3 !important;
-    color: #000 !important;
-  }
-
   .report-section-box {
-    background: #ffffff !important;
-    border: 1px solid #64748b !important;
-    border-radius: 4px !important;
-    padding: 5px 8px !important;
-    margin-bottom: 4px !important;
     break-inside: avoid;
     page-break-inside: avoid;
+    margin-bottom: 4px !important;
+    padding: 6px 8px !important;
+    border: 1px solid #94a3b8 !important;
+    background: #ffffff !important;
   }
 
   .report-title {
@@ -1119,39 +1115,15 @@ const resetForm = () => {
     margin: 0 0 3px 0 !important;
   }
 
-  .report-highlight-text {
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: #1d4ed8 !important;
-    margin: 0 !important;
-  }
-
-  .report-timestamp {
-    font-size: 8px !important;
-    color: #475569 !important;
-    margin-top: 2px !important;
-  }
-
-  .report-table-grid {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 10px !important;
-  }
-
   .report-table-grid td {
-    padding: 1px 0 !important;
-    border: none !important;
-  }
-
-  .report-data-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 9px !important;
+    padding: 2px 0 !important;
+    font-size: 10px !important;
   }
 
   .report-data-table th, 
   .report-data-table td {
-    padding: 2px 4px !important;
+    padding: 3px 5px !important;
+    font-size: 10px !important;
     border: 1px solid #cbd5e1 !important;
   }
 
@@ -1162,16 +1134,16 @@ const resetForm = () => {
   }
 
   .math-step-item {
-    font-size: 9px !important;
-    margin-bottom: 3px !important;
+    font-size: 10px !important;
+    margin-bottom: 4px !important;
   }
 
   .math-code-box {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
-    padding: 2px 6px !important;
+    padding: 3px 6px !important;
     font-family: monospace !important;
-    font-size: 9px !important;
+    font-size: 10px !important;
     border-radius: 3px !important;
     margin-top: 2px !important;
   }
