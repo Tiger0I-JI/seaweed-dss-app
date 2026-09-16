@@ -196,7 +196,23 @@ const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s
   }
 }
 
-// Database Operations & Snapshot Capture upon clicking Run Engine
+// Helper to get exact engine results for a specific historical record using its saved weights
+const getRecordEngine = (record) => {
+  if (!record) return { rankings: [], steps: { divisors: [], weighted: [], distances: [] } }
+  return calculateDetailedEngine(
+    record.budget,
+    record.labor,
+    record.space,
+    {
+      p: record.weight_profit ?? 4,
+      c: record.weight_cost ?? 4,
+      s: record.weight_space ?? 3,
+      cap: record.weight_capacity ?? 5
+    }
+  )
+}
+
+// Database Operations & Snapshot Capture including Weights
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
@@ -209,7 +225,11 @@ const saveEvaluation = async () => {
       budget: currentInputSnapshot.budget, 
       labor: currentInputSnapshot.labor, 
       space: currentInputSnapshot.space,
-      target_capacity: currentInputSnapshot.target_capacity, 
+      target_capacity: currentInputSnapshot.target_capacity,
+      weight_profit: currentInputSnapshot.weight_profit,
+      weight_cost: currentInputSnapshot.weight_cost,
+      weight_space: currentInputSnapshot.weight_space,
+      weight_capacity: currentInputSnapshot.weight_capacity,
       recommended_config: recommendationResult
     }
 
@@ -280,7 +300,13 @@ onMounted(() => {
 })
 
 const editEvaluation = (item) => {
-  form.value = { ...item, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
+  form.value = { 
+    ...item, 
+    weight_profit: item.weight_profit ?? 4, 
+    weight_cost: item.weight_cost ?? 4, 
+    weight_space: item.weight_space ?? 3, 
+    weight_capacity: item.weight_capacity ?? 5 
+  }
   editingId.value = item.id
   triggerToast('Loaded record into editor form', 'info')
 }
@@ -308,10 +334,10 @@ const loadRecordToDashboard = (item) => {
     labor: item.labor,
     space: item.space,
     target_capacity: item.target_capacity,
-    weight_profit: 4,
-    weight_cost: 4,
-    weight_space: 3,
-    weight_capacity: 5
+    weight_profit: item.weight_profit ?? 4,
+    weight_cost: item.weight_cost ?? 4,
+    weight_space: item.weight_space ?? 3,
+    weight_capacity: item.weight_capacity ?? 5
   }
   showDetailModal.value = false
   triggerToast('Historical parameters loaded into main dashboard!', 'info')
@@ -667,11 +693,11 @@ const resetForm = () => {
             <p style="font-size: 10px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
-          <!-- Section 2: Recommendation (Directly derived from calculation ranking to ensure 100% match) -->
+          <!-- Section 2: Recommendation (Driven by record's exact saved weights via getRecordEngine) -->
           <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
             <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
             <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">
-              {{ calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings.length > 0 ? `${calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings[0].name} (TOPSIS Score: ${calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings[0].score.toFixed(4)})` : selectedRecord.recommended_config }}
+              {{ getRecordEngine(selectedRecord).text }}
             </p>
           </div>
 
@@ -687,7 +713,7 @@ const resetForm = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(r, idx) in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
+                <tr v-for="(r, idx) in getRecordEngine(selectedRecord).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 5px; font-weight: bold;">#{{ idx + 1 }}</td>
                   <td style="padding: 5px; font-weight: 500;">{{ r.name }}</td>
                   <td style="padding: 5px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
@@ -703,11 +729,11 @@ const resetForm = () => {
             <div style="margin-bottom: 8px; font-size: 11px;">
               <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569;">Step 2: Vector Normalization Divisors (RMS Denominators)</p>
               <div style="background: #f8fafc; padding: 4px 8px; border-radius: 4px; font-family: monospace; border: 1px solid #e2e8f0;">
-                [ {{ calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
+                [ {{ getRecordEngine(selectedRecord).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
               </div>
             </div>
 
-            <div style="margin-bottom: 8px;" v-if="calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted.length > 0">
+            <div style="margin-bottom: 8px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
               <p style="margin: 0 0 2px 0; font-weight: 600; color: #475569; font-size: 11px;">Step 3: Weighted Normalized Matrix (v_ij)</p>
               <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
                 <thead>
@@ -720,7 +746,7 @@ const resetForm = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
+                  <tr v-for="row in getRecordEngine(selectedRecord).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
                     <td style="padding: 4px; font-weight: 500;">{{ row.name }}</td>
                     <td style="padding: 4px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
                     <td style="padding: 4px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
@@ -743,7 +769,7 @@ const resetForm = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="d in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
+                  <tr v-for="d in getRecordEngine(selectedRecord).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
                     <td style="padding: 4px; font-weight: 500;">{{ d.name }}</td>
                     <td style="padding: 4px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
                     <td style="padding: 4px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
