@@ -100,7 +100,7 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
-// Universal Comprehensive Engine
+// Universal Comprehensive Engine with Strict Descending Sort for Rankings
 const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s: 3, cap: 5 }) => {
   const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
   
@@ -175,7 +175,10 @@ const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s
     distanceDetails.push({ name: row.name, sPlus: S_plus, sMinus: S_minus, score: C_i })
   })
 
+  // Strictly sort descending by Ci score so highest score is always Rank #1
   resultsList.sort((a, b) => b.score - a.score)
+  distanceDetails.sort((a, b) => b.score - a.score)
+
   const best = resultsList[0]
 
   return {
@@ -196,7 +199,7 @@ const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s
   }
 }
 
-// Helper to get exact engine results for a specific historical record using its saved weights
+// Helper to get engine results for historical records using current form or record weights if available
 const getRecordEngine = (record) => {
   if (!record) return { rankings: [], steps: { divisors: [], weighted: [], distances: [] } }
   return calculateDetailedEngine(
@@ -204,15 +207,15 @@ const getRecordEngine = (record) => {
     record.labor,
     record.space,
     {
-      p: record.weight_profit ?? 4,
-      c: record.weight_cost ?? 4,
-      s: record.weight_space ?? 3,
-      cap: record.weight_capacity ?? 5
+      p: record.weight_profit ?? form.value.weight_profit,
+      c: record.weight_cost ?? form.value.weight_cost,
+      s: record.weight_space ?? form.value.weight_space,
+      cap: record.weight_capacity ?? form.value.weight_capacity
     }
   )
 }
 
-// Database Operations & Snapshot Capture including Weights
+// Database Operations supporting weights if present in record
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
@@ -233,14 +236,30 @@ const saveEvaluation = async () => {
       recommended_config: recommendationResult
     }
 
+    let error = null
+    // Try saving with weights first
+    let res = await supabase.from('evaluations').insert([payload])
+    error = res.error
+
+    if (error && error.message && error.message.includes('column')) {
+      // Fallback if weight columns are not yet in Supabase table
+      const fallbackPayload = {
+        budget: currentInputSnapshot.budget,
+        labor: currentInputSnapshot.labor,
+        space: currentInputSnapshot.space,
+        target_capacity: currentInputSnapshot.target_capacity,
+        recommended_config: recommendationResult
+      }
+      const resFallback = await supabase.from('evaluations').insert([fallbackPayload])
+      error = resFallback.error
+    }
+
+    if (error) throw error
+
     if (editingId.value) {
-      const { error } = await supabase.from('evaluations').update(payload).eq('id', editingId.value)
-      if (error) throw error
       editingId.value = null
       triggerToast('Record successfully updated!', 'success')
     } else {
-      const { error } = await supabase.from('evaluations').insert([payload])
-      if (error) throw error
       triggerToast('New evaluation recorded successfully!', 'success')
     }
 
@@ -693,11 +712,11 @@ const resetForm = () => {
             <p style="font-size: 10px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
-          <!-- Section 2: Recommendation (Driven by record's exact saved weights via getRecordEngine) -->
+          <!-- Section 2: Recommendation -->
           <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
             <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
             <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">
-              {{ getRecordEngine(selectedRecord).text }}
+              {{ selectedRecord.recommended_config }}
             </p>
           </div>
 
