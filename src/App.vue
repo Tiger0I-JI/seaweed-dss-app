@@ -697,19 +697,15 @@ const resetForm = () => {
 
         <div v-if="selectedRecord" class="printable-report-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 10px; color: #334155;">
           
-          <!-- Section 1: Inputs -->
+          <!-- Section 1: Inputs (Using CSS Grid for clean separation both on screen & print) -->
           <div class="report-section-box" style="background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
             <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
-            <table class="report-table-grid" style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <tr>
-                <td style="padding: 2px 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</td>
-                <td style="padding: 2px 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</td>
-              </tr>
-              <tr>
-                <td style="padding: 2px 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</td>
-                <td style="padding: 2px 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</td>
-              </tr>
-            </table>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 11px;">
+              <div><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</div>
+              <div><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</div>
+              <div><strong>Available Space:</strong> {{ selectedRecord.space }} m²</div>
+              <div><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</div>
+            </div>
             <div class="report-timestamp" style="font-size: 9px; color: #64748b; margin-top: 4px;">Timestamp: {{ new Date(selectedRecord.created_at).toLocaleString() }}</div>
           </div>
 
