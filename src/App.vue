@@ -31,6 +31,12 @@ const latestResult = ref({
   score: '',
   reason: '',
   rankings: [],
+  inputs: {
+    budget: 1500000,
+    labor: 15,
+    space: 100,
+    target_capacity: 5000
+  },
   steps: {
     normalized: [],
     weighted: [],
@@ -159,11 +165,11 @@ const calculateRecordRankings = (budget, labor, space) => {
 }
 
 // Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
-const runConstraintScreeningAndTopsis = () => {
+const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
   const feasible = alternatives.filter(alt => 
-    alt.cost <= form.value.budget && 
-    alt.space <= form.value.space && 
-    alt.labor <= form.value.labor
+    alt.cost <= targetForm.budget && 
+    alt.space <= targetForm.space && 
+    alt.labor <= targetForm.labor
   )
 
   if (feasible.length === 0) {
@@ -186,12 +192,12 @@ const runConstraintScreeningAndTopsis = () => {
     }
   }
 
-  const sumWeights = form.value.weight_profit + form.value.weight_cost + form.value.weight_space + form.value.weight_capacity
+  const sumWeights = targetForm.weight_profit + targetForm.weight_cost + targetForm.weight_space + targetForm.weight_capacity
   const W = [
-    form.value.weight_profit / sumWeights,
-    form.value.weight_cost / sumWeights,
-    form.value.weight_space / sumWeights,
-    form.value.weight_capacity / sumWeights
+    targetForm.weight_profit / sumWeights,
+    targetForm.weight_cost / sumWeights,
+    targetForm.weight_space / sumWeights,
+    targetForm.weight_capacity / sumWeights
   ]
 
   const numCriteria = W.length
@@ -251,7 +257,7 @@ const runConstraintScreeningAndTopsis = () => {
   return {
     text: `${best.name} (TOPSIS Score: ${best.score.toFixed(4)})`,
     score: best.score.toFixed(4),
-    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${form.value.weight_profit}, Cost: ${form.value.weight_cost}, Space: ${form.value.weight_space}, Capacity: ${form.value.weight_capacity}).`,
+    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${targetForm.weight_profit}, Cost: ${targetForm.weight_cost}, Space: ${targetForm.weight_space}, Capacity: ${targetForm.weight_capacity}).`,
     rankings: resultsList,
     steps: {
       normalized: normalizedMatrix,
@@ -266,18 +272,20 @@ const runConstraintScreeningAndTopsis = () => {
   }
 }
 
-// Database Operations with Smooth Loading & Toast (Calculations run ONLY upon clicking Run Engine)
+// Database Operations & Snapshot Capture upon clicking Run Engine
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
-    const resultObj = runConstraintScreeningAndTopsis()
+    // Capture the exact input snapshot at the moment of running
+    const currentInputSnapshot = { ...form.value }
+    const resultObj = runConstraintScreeningAndTopsis(currentInputSnapshot)
     const recommendationResult = resultObj.text
 
     const payload = {
-      budget: form.value.budget, 
-      labor: form.value.labor, 
-      space: form.value.space,
-      target_capacity: form.value.target_capacity, 
+      budget: currentInputSnapshot.budget, 
+      labor: currentInputSnapshot.labor, 
+      space: currentInputSnapshot.space,
+      target_capacity: currentInputSnapshot.target_capacity, 
       recommended_config: recommendationResult
     }
 
@@ -292,12 +300,18 @@ const saveEvaluation = async () => {
       triggerToast('New evaluation recorded successfully!', 'success')
     }
 
-    // Update active UI results only when Run button is clicked
+    // Lock in the latest result and its exact input snapshot for display and matrix breakdown
     latestResult.value = {
       config: recommendationResult,
       score: resultObj.score,
       reason: resultObj.reason,
       rankings: resultObj.rankings,
+      inputs: {
+        budget: currentInputSnapshot.budget,
+        labor: currentInputSnapshot.labor,
+        space: currentInputSnapshot.space,
+        target_capacity: currentInputSnapshot.target_capacity
+      },
       steps: resultObj.steps
     }
     showResultModal.value = true
@@ -325,13 +339,20 @@ const fetchEvaluations = async () => {
 
 onMounted(() => {
   fetchEvaluations()
-  // Initial run on load to populate default state
-  const initialRes = runConstraintScreeningAndTopsis()
+  // Initial run on load to populate default state snapshot
+  const initialInput = { ...form.value }
+  const initialRes = runConstraintScreeningAndTopsis(initialInput)
   latestResult.value = {
     config: initialRes.text,
     score: initialRes.score,
     reason: initialRes.reason,
     rankings: initialRes.rankings,
+    inputs: {
+      budget: initialInput.budget,
+      labor: initialInput.labor,
+      space: initialInput.space,
+      target_capacity: initialInput.target_capacity
+    },
     steps: initialRes.steps
   }
 })
@@ -601,7 +622,7 @@ const resetForm = () => {
       </div>
       
       <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
-        Visual comparison of alternative configurations based on Closeness Coefficients (Ci).
+        Visual comparison of alternative configurations based on Closeness Coefficients (Ci) from the latest run.
       </p>
 
       <!-- Dynamic Ranking Bars -->
@@ -754,13 +775,13 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Clean UI with Live Numbers) -->
+    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Displays Latest Run Snapshot) -->
     <div v-if="showMatrixModal" class="modal-overlay no-print" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
           <div>
             <h3 style="margin: 0; font-size: 1.35rem; color: #1e293b;">📐 TOPSIS & Constraint Screening: Live Mathematical Breakdown</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Step-by-step calculations with live operational numbers based on your latest run.</p>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Step-by-step calculations based on your <strong>Latest Run Snapshot</strong>.</p>
           </div>
           <button @click="showMatrixModal = false" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;">✕</button>
         </div>
@@ -778,10 +799,10 @@ const resetForm = () => {
             </ul>
           </div>
 
-          <!-- Step 1: Constraint Screening -->
+          <!-- Step 1: Constraint Screening (Using Snapshot Inputs) -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 1: Constraint-Based Feasibility Screening</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Checking user resources from latest run: Budget ≤ <strong>{{ form.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ form.labor }} Workers</strong>, Space ≤ <strong>{{ form.space }} m²</strong>.</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Checking latest run resources: Budget ≤ <strong>{{ latestResult.inputs.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ latestResult.inputs.labor }} Workers</strong>, Space ≤ <strong>{{ latestResult.inputs.space }} m²</strong>.</p>
             <div style="background: #e0e7ff; color: #3730a3; padding: 10px; border-radius: 6px; font-weight: 600;">
               ✨ Result: {{ latestResult.steps.feasibleCount || 4 }} out of 4 Alternative Configurations passed the constraint screening.
             </div>
@@ -790,7 +811,7 @@ const resetForm = () => {
           <!-- Step 2: Vector Normalization & Live Divisors -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 2: Vector Normalization (r<sub>ij</sub>)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Formula: r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²). Below are the live square root divisors (denominator) computed across feasible alternatives:</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Formula: r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²). Square root divisors (denominator) computed from the latest run:</p>
             <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-family: monospace; font-size: 12px;">
               Divisors (RMS denominators): [ 
                 {{ latestResult.steps.divisors ? latestResult.steps.divisors.map(d => d.toFixed(2)).join(', ') : '0, 0, 0, 0' }} 
@@ -826,7 +847,7 @@ const resetForm = () => {
           <!-- Step 3: Weighted Normalized Matrix -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 3: Weighted Normalized Matrix (v<sub>ij</sub> = r<sub>ij</sub> × W<sub>j</sub>)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Live Normalized Criteria Weights (W<sub>j</sub>) from latest run (sum = 1.0):</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Normalized Criteria Weights (W<sub>j</sub>) from latest run (sum = 1.0):</p>
             <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-size: 12px;">
               Profit W₁ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[0] : 0.25).toFixed(4) }}</strong> | 
               Cost W₂ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[1] : 0.25).toFixed(4) }}</strong> | 
