@@ -36,7 +36,10 @@ const latestResult = ref({
     weighted: [],
     vPlus: [],
     vMinus: [],
-    distances: []
+    distances: [],
+    weights: [0.25, 0.25, 0.25, 0.25],
+    divisors: [0, 0, 0, 0],
+    feasibleCount: 4
   }
 })
 
@@ -169,7 +172,7 @@ const runConstraintScreeningAndTopsis = () => {
       score: 'N/A',
       reason: 'Your available budget, workforce, or space is below the minimum engineering requirements of all 4 alternative configurations.',
       rankings: alternatives.map(alt => ({ name: alt.name, score: 0 })),
-      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [] }
+      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [], weights: [0.25,0.25,0.25,0.25], divisors: [0,0,0,0], feasibleCount: 0 }
     }
   }
 
@@ -179,7 +182,7 @@ const runConstraintScreeningAndTopsis = () => {
       score: '1.0000',
       reason: 'Only this configuration satisfies your strict resource constraints; therefore, no further multi-criteria ranking was required.',
       rankings: [{ name: feasible[0].name, score: 1.0 }],
-      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [] }
+      steps: { normalized: [], weighted: [], vPlus: [], vMinus: [], distances: [], weights: [0.25,0.25,0.25,0.25], divisors: [0,0,0,0], feasibleCount: 1 }
     }
   }
 
@@ -319,7 +322,13 @@ const fetchEvaluations = async () => {
   } catch (err) {}
 }
 
-onMounted(() => fetchEvaluations())
+onMounted(() => {
+  fetchEvaluations()
+  // Run initial calculation so the derivation modal has live numbers immediately on load
+  const initialRes = runConstraintScreeningAndTopsis()
+  latestResult.value.steps = initialRes.steps
+  latestResult.value.rankings = initialRes.rankings
+})
 
 const editEvaluation = (item) => {
   form.value = { ...item, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
@@ -387,6 +396,13 @@ const closeDetailModal = () => {
 const resetForm = () => {
   form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
   editingId.value = null
+}
+
+const openMatrixModal = () => {
+  // Ensure fresh calculation before opening modal
+  const res = runConstraintScreeningAndTopsis()
+  latestResult.value.steps = res.steps
+  showMatrixModal.value = true
 }
 </script>
 
@@ -583,7 +599,7 @@ const resetForm = () => {
           <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
         </h2>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; background: #4f46e5; color: white; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(79,70,229,0.3);">
+          <button @click="openMatrixModal" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; background: #4f46e5; color: white; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(79,70,229,0.3);">
             📐 View Full Step-by-Step Mathematical Derivation
           </button>
           <span class="tooltip-target" style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0; cursor: help;">
@@ -747,53 +763,59 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Detailed with Formulas & Units) -->
+    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Clean UI with Live Numbers) -->
     <div v-if="showMatrixModal" class="modal-overlay no-print" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
           <div>
-            <h3 style="margin: 0; font-size: 1.35rem; color: #1e293b;">📐 TOPSIS & Constraint Screening: Full Mathematical Derivation</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Detailed step-by-step calculation formulas, variables, normalization, and distance metrics with units.</p>
+            <h3 style="margin: 0; font-size: 1.35rem; color: #1e293b;">📐 TOPSIS & Constraint Screening: Live Mathematical Breakdown</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Step-by-step calculations with live operational numbers based on your current inputs.</p>
           </div>
           <button @click="showMatrixModal = false" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;">✕</button>
         </div>
         
         <div class="modal-body" style="font-size: 13px; color: #334155; display: flex; flex-direction: column; gap: 24px;">
           
-          <!-- Introduction / Criteria Definition -->
+          <!-- Criteria Definitions -->
           <div style="background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
-            <h4 style="margin-top: 0; color: #1e293b; font-size: 14px; font-weight: 700;">📌 Evaluation Criteria Definitions & Optimization Directions</h4>
+            <h4 style="margin-top: 0; color: #1e293b; font-size: 14px; font-weight: 700;">📌 Evaluation Criteria & Optimization Goals</h4>
             <ul style="margin: 8px 0 0 20px; padding: 0; line-height: 1.6;">
-              <li><strong>Criterion 1 ($C_1$ - Projected Monthly Profit):</strong> Benefit criteria (Maximize $\uparrow$), Unit: <code>THB/Month</code></li>
-              <li><strong>Criterion 2 ($C_2$ - Initial Investment Cost):</strong> Cost criteria (Minimize $\downarrow$), Unit: <code>THB</code></li>
-              <li><strong>Criterion 3 ($C_3$ - Factory Floor Space Required):</strong> Cost criteria (Minimize $\downarrow$), Unit: <code>m²</code></li>
-              <li><strong>Criterion 4 ($C_4$ - Monthly Production Capacity):</strong> Benefit criteria (Maximize $\uparrow$), Unit: <code>Units/Month</code></li>
+              <li><strong>Criterion 1 (C₁ - Monthly Profit):</strong> Benefit criteria (Maximize ↑), Unit: <code>THB/Month</code></li>
+              <li><strong>Criterion 2 (C₂ - Initial Cost):</strong> Cost criteria (Minimize ↓), Unit: <code>THB</code></li>
+              <li><strong>Criterion 3 (C₃ - Factory Space):</strong> Cost criteria (Minimize ↓), Unit: <code>m²</code></li>
+              <li><strong>Criterion 4 (C₄ - Monthly Capacity):</strong> Benefit criteria (Maximize ↑), Unit: <code>Units/Month</code></li>
             </ul>
           </div>
 
           <!-- Step 1: Constraint Screening -->
-          <div>
-            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Step 1: Constraint-Based Screening</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Filtering alternatives against user-defined resource limits: Budget $\le$ {{ form.budget.toLocaleString() }} THB, Workforce $\le$ {{ form.labor }} Workers, Space $\le$ {{ form.space }} m².</p>
-            <p style="background: #e0e7ff; color: #3730a3; padding: 10px; border-radius: 6px; font-weight: 600; margin: 0;">
-              Feasible Alternatives Qualified for TOPSIS: {{ latestResult.steps.feasibleCount || 4 }} / 4 Configurations
-            </p>
+          <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 1: Constraint-Based Feasibility Screening</h4>
+            <p style="color: #64748b; margin-bottom: 8px;">Checking user resources: Budget ≤ <strong>{{ form.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ form.labor }} Workers</strong>, Space ≤ <strong>{{ form.space }} m²</strong>.</p>
+            <div style="background: #e0e7ff; color: #3730a3; padding: 10px; border-radius: 6px; font-weight: 600;">
+              ✨ Result: {{ latestResult.steps.feasibleCount || 4 }} out of 4 Alternative Configurations passed the constraint screening.
+            </div>
           </div>
 
-          <!-- Step 2: Vector Normalization -->
-          <div>
-            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Step 2: Vector Normalization ($r_{ij}$)</h4>
-            <p style="color: #64748b; margin-bottom: 6px;">Formula: $r_{ij} = \frac{x_{ij}}{\sqrt{\sum_{i=1}^{m} x_{ij}^2}}$ (Divisors computed across feasible alternatives)</p>
+          <!-- Step 2: Vector Normalization & Live Divisors -->
+          <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 2: Vector Normalization (r<sub>ij</sub>)</h4>
+            <p style="color: #64748b; margin-bottom: 8px;">Formula: r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²). Below are the live square root divisors (denominator) computed across feasible alternatives:</p>
+            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-family: monospace; font-size: 12px;">
+              Divisors (RMS denominators): [ 
+                {{ latestResult.steps.divisors ? latestResult.steps.divisors.map(d => d.toFixed(2)).join(', ') : '0, 0, 0, 0' }} 
+              ]
+            </div>
+            
             <div v-if="latestResult.steps && latestResult.steps.normalized && latestResult.steps.normalized.length > 0">
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
                   <thead>
                     <tr style="background: #f1f5f9; color: #475569;">
                       <th style="padding: 8px;">Alternative Configuration</th>
-                      <th style="padding: 8px; text-align: center;">$r_{i1}$ (Profit)</th>
-                      <th style="padding: 8px; text-align: center;">$r_{i2}$ (Cost)</th>
-                      <th style="padding: 8px; text-align: center;">$r_{i3}$ (Space)</th>
-                      <th style="padding: 8px; text-align: center;">$r_{i4}$ (Capacity)</th>
+                      <th style="padding: 8px; text-align: center;">r<sub>i1</sub> (Profit)</th>
+                      <th style="padding: 8px; text-align: center;">r<sub>i2</sub> (Cost)</th>
+                      <th style="padding: 8px; text-align: center;">r<sub>i3</sub> (Space)</th>
+                      <th style="padding: 8px; text-align: center;">r<sub>i4</sub> (Capacity)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -810,27 +832,27 @@ const resetForm = () => {
             </div>
           </div>
 
-          <!-- Step 3: Weighted Normalized Decision Matrix -->
-          <div>
-            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Step 3: Weighted Normalized Matrix ($v_{ij}$)</h4>
-            <p style="color: #64748b; margin-bottom: 6px;">Formula: $v_{ij} = r_{ij} \times W_j$ (where normalized weights $W_j$ sum to 1.0)</p>
-            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
-              <strong>Normalized Weights ($W_j$):</strong> 
-              Profit = {{ (latestResult.steps.weights ? latestResult.steps.weights[0] : 0.25).toFixed(4) }} | 
-              Cost = {{ (latestResult.steps.weights ? latestResult.steps.weights[1] : 0.25).toFixed(4) }} | 
-              Space = {{ (latestResult.steps.weights ? latestResult.steps.weights[2] : 0.25).toFixed(4) }} | 
-              Capacity = {{ (latestResult.steps.weights ? latestResult.steps.weights[3] : 0.25).toFixed(4) }}
+          <!-- Step 3: Weighted Normalized Matrix -->
+          <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 3: Weighted Normalized Matrix (v<sub>ij</sub> = r<sub>ij</sub> × W<sub>j</sub>)</h4>
+            <p style="color: #64748b; margin-bottom: 8px;">Live Normalized Criteria Weights (W<sub>j</sub>) based on your slider settings (sum = 1.0):</p>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-size: 12px;">
+              Profit W₁ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[0] : 0.25).toFixed(4) }}</strong> | 
+              Cost W₂ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[1] : 0.25).toFixed(4) }}</strong> | 
+              Space W₃ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[2] : 0.25).toFixed(4) }}</strong> | 
+              Capacity W₄ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[3] : 0.25).toFixed(4) }}</strong>
             </div>
+            
             <div v-if="latestResult.steps && latestResult.steps.weighted && latestResult.steps.weighted.length > 0">
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
                   <thead>
                     <tr style="background: #f1f5f9; color: #475569;">
                       <th style="padding: 8px;">Alternative Configuration</th>
-                      <th style="padding: 8px; text-align: center;">$v_{i1}$ (Profit)</th>
-                      <th style="padding: 8px; text-align: center;">$v_{i2}$ (Cost)</th>
-                      <th style="padding: 8px; text-align: center;">$v_{i3}$ (Space)</th>
-                      <th style="padding: 8px; text-align: center;">$v_{i4}$ (Capacity)</th>
+                      <th style="padding: 8px; text-align: center;">v<sub>i1</sub></th>
+                      <th style="padding: 8px; text-align: center;">v<sub>i2</sub></th>
+                      <th style="padding: 8px; text-align: center;">v<sub>i3</sub></th>
+                      <th style="padding: 8px; text-align: center;">v<sub>i4</sub></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -847,29 +869,30 @@ const resetForm = () => {
             </div>
           </div>
 
-          <!-- Step 4: Ideal Best and Ideal Worst Solutions -->
-          <div>
-            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Step 4: Ideal Best ($A^+$) and Ideal Worst ($A^-$) Solutions</h4>
-            <p style="color: #64748b; margin-bottom: 6px;">For Benefit criteria ($C_1, C_4$): $A^+ = \max(v_{ij}), A^- = \min(v_{ij})$. For Cost criteria ($C_2, C_3$): $A^+ = \min(v_{ij}), A^- = \max(v_{ij})$.</p>
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace;">
+          <!-- Step 4: Ideal Best and Worst Solutions -->
+          <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 4: Ideal Best (A⁺) and Ideal Worst (A⁻) Solutions</h4>
+            <p style="color: #64748b; margin-bottom: 8px;">Derived from max/min values of the weighted matrix based on benefit/cost criteria types.</p>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 12px;">
               <p style="margin: 0;"><strong>A⁺ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
               <p style="margin: 6px 0 0 0;"><strong>A⁻ (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
             </div>
           </div>
 
           <!-- Step 5 & 6: Euclidean Distances & Closeness Coefficients -->
-          <div>
-            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Steps 5 & 6: Euclidean Separation ($S_i^+, S_i^-$) & Closeness Coefficient ($C_i$)</h4>
-            <p style="color: #64748b; margin-bottom: 6px;">Formulas: $S_i^+ = \sqrt{\sum (v_{ij} - A_j^+)^2}$, $S_i^- = \sqrt{\sum (v_{ij} - A_j^-)^2}$, and $C_i = \frac{S_i^-}{S_i^+ + S_i^-}$.</p>
+          <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Steps 5 & 6: Euclidean Separation (S⁺, S⁻) & Closeness Coefficient (Cᵢ)</h4>
+            <p style="color: #64748b; margin-bottom: 8px;">Formula: Cᵢ = S⁻ / (S⁺ + S⁻). Higher Cᵢ score indicates closer proximity to the ideal best solution.</p>
+            
             <div v-if="latestResult.steps && latestResult.steps.distances && latestResult.steps.distances.length > 0">
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
                   <thead>
                     <tr style="background: #f1f5f9; color: #475569;">
                       <th style="padding: 8px;">Alternative Configuration</th>
-                      <th style="padding: 8px; text-align: center;">$S_i^+$ (Dist. to Best)</th>
-                      <th style="padding: 8px; text-align: center;">$S_i^-$ (Dist. to Worst)</th>
-                      <th style="padding: 8px; text-align: center;">$C_i$ Score (Rank)</th>
+                      <th style="padding: 8px; text-align: center;">Sᵢ⁺ (Dist. to Best)</th>
+                      <th style="padding: 8px; text-align: center;">Sᵢ⁻ (Dist. to Worst)</th>
+                      <th style="padding: 8px; text-align: center;">Cᵢ Score (Rank)</th>
                     </tr>
                   </thead>
                   <tbody>
