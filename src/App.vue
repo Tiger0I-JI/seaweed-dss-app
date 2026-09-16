@@ -689,111 +689,110 @@ const resetForm = () => {
         </div>
 
         <!-- Professional Print Header -->
-        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 4px; margin-bottom: 6px;">
-          <h2 style="margin: 0; font-size: 12px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
-          <p style="margin: 1px 0 0 0; font-size: 10px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
-          <p style="margin: 1px 0 0 0; font-size: 8px; color: #64748b;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
+        <div class="print-only-title" style="display: none; border-bottom: 2px solid #1e293b; padding-bottom: 3px; margin-bottom: 4px;">
+          <h2 style="margin: 0; font-size: 11px; color: #1e293b; font-weight: 700; text-transform: uppercase;">Chiang Mai University — Industrial Engineering</h2>
+          <p style="margin: 1px 0 0 0; font-size: 9px; color: #334155; font-weight: 600;">Seaweed Snack Production Technology Licensing DSS</p>
         </div>
 
-        <div v-if="selectedRecord" class="printable-report-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 10px; color: #334155;">
+        <div v-if="selectedRecord" class="printable-report-body" style="font-size: 12px; display: flex; flex-direction: column; gap: 6px; color: #334155;">
           
-          <!-- Section 1: Inputs with robust CSS Grid class -->
-          <div class="report-section-box" style="background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+          <!-- Section 1: Inputs with robust CSS Grid -->
+          <div class="report-section-box" style="background: #f8fafc; padding: 6px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 11px; color: #1e293b; margin-top: 0; margin-bottom: 3px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
             <div class="snapshot-grid-box">
               <div><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</div>
               <div><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</div>
               <div><strong>Available Space:</strong> {{ selectedRecord.space }} m²</div>
               <div><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</div>
             </div>
-            <div class="report-timestamp" style="font-size: 9px; color: #64748b; margin-top: 4px;">Timestamp: {{ new Date(selectedRecord.created_at).toLocaleString() }}</div>
+            <div class="report-timestamp" style="font-size: 8px; color: #64748b; margin-top: 2px;">Timestamp: {{ new Date(selectedRecord.created_at).toLocaleString() }}</div>
           </div>
 
           <!-- Section 2: Recommendation -->
-          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
-            <p class="report-highlight-text" style="font-size: 12px; margin: 0; color: #2563eb; font-weight: bold;">
+          <div class="report-section-box" style="background: #ffffff; padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 11px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
+            <p class="report-highlight-text" style="font-size: 11px; margin: 0; color: #2563eb; font-weight: bold;">
               {{ selectedRecord.recommended_config }}
             </p>
           </div>
 
           <!-- Section 3: Rankings Table -->
-          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
-            <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+          <div class="report-section-box" style="background: #ffffff; padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 11px; color: #1e293b; margin-top: 0; margin-bottom: 3px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
+            <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
               <thead>
                 <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; color: #475569;">
-                  <th style="padding: 4px;">Rank</th>
-                  <th style="padding: 4px;">Alternative Configuration</th>
-                  <th style="padding: 4px; text-align: right;">Ci Score</th>
+                  <th style="padding: 2px 4px;">Rank</th>
+                  <th style="padding: 2px 4px;">Alternative Configuration</th>
+                  <th style="padding: 2px 4px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(r, idx) in getRecordEngine(selectedRecord).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 4px; font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td style="padding: 4px; font-weight: 500;">{{ r.name }}</td>
-                  <td style="padding: 4px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                  <td style="padding: 2px 4px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 2px 4px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 2px 4px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Section 4: Full Step-by-Step Mathematical Derivation -->
-          <div class="report-section-box" style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-            <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
+          <div class="report-section-box" style="background: #ffffff; padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            <h4 class="report-title" style="font-size: 11px; color: #1e293b; margin-top: 0; margin-bottom: 3px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
             
-            <div class="math-step-item" style="margin-bottom: 4px; font-size: 11px;">
+            <div class="math-step-item" style="margin-bottom: 3px; font-size: 10px;">
               <strong>Step 1: Constraint Screening Result</strong> — Passed: {{ getRecordEngine(selectedRecord).steps.feasibleCount || 4 }} out of 4 feasible configurations.
             </div>
 
-            <div class="math-step-item" style="margin-bottom: 4px; font-size: 11px;">
+            <div class="math-step-item" style="margin-bottom: 3px; font-size: 10px;">
               <strong>Step 2: Vector Normalization Divisors (RMS Denominators)</strong>
-              <div class="math-code-box" style="background: #f8fafc; padding: 3px 6px; border-radius: 3px; font-family: monospace; border: 1px solid #e2e8f0; margin-top: 2px;">
+              <div class="math-code-box" style="background: #f8fafc; padding: 2px 4px; border-radius: 3px; font-family: monospace; border: 1px solid #e2e8f0; margin-top: 1px;">
                 [ {{ getRecordEngine(selectedRecord).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
               </div>
             </div>
 
-            <div class="math-step-item" style="margin-bottom: 4px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
+            <div class="math-step-item" style="margin-bottom: 3px;" v-if="getRecordEngine(selectedRecord).steps.weighted.length > 0">
               <strong>Step 3: Weighted Normalized Matrix (v_ij)</strong>
-              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; margin-top: 3px;">
+              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 9px; text-align: left; margin-top: 2px;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 3px;">Configuration</th>
-                    <th style="padding: 3px; text-align: center;">v1 (Profit)</th>
-                    <th style="padding: 3px; text-align: center;">v2 (Cost)</th>
-                    <th style="padding: 3px; text-align: center;">v3 (Space)</th>
-                    <th style="padding: 3px; text-align: center;">v4 (Capacity)</th>
+                    <th style="padding: 2px;">Configuration</th>
+                    <th style="padding: 2px; text-align: center;">v1 (Profit)</th>
+                    <th style="padding: 2px; text-align: center;">v2 (Cost)</th>
+                    <th style="padding: 2px; text-align: center;">v3 (Space)</th>
+                    <th style="padding: 2px; text-align: center;">v4 (Capacity)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="row in getRecordEngine(selectedRecord).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 3px; font-weight: 500;">{{ row.name }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                    <td style="padding: 2px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="math-step-item" style="font-size: 11px;">
+            <div class="math-step-item" style="font-size: 10px;">
               <strong>Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</strong>
-              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; margin-top: 3px;">
+              <table class="report-data-table" style="width: 100%; border-collapse: collapse; font-size: 9px; text-align: left; margin-top: 2px;">
                 <thead>
                   <tr style="background: #f1f5f9; color: #475569;">
-                    <th style="padding: 3px;">Configuration</th>
-                    <th style="padding: 3px; text-align: center;">S⁺ (Best)</th>
-                    <th style="padding: 3px; text-align: center;">S⁻ (Worst)</th>
-                    <th style="padding: 3px; text-align: center;">Ci Score</th>
+                    <th style="padding: 2px;">Configuration</th>
+                    <th style="padding: 2px; text-align: center;">S⁺ (Best)</th>
+                    <th style="padding: 2px; text-align: center;">S⁻ (Worst)</th>
+                    <th style="padding: 2px; text-align: center;">Ci Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="d in getRecordEngine(selectedRecord).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 3px; font-weight: 500;">{{ d.name }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
-                    <td style="padding: 3px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
-                    <td style="padding: 3px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                    <td style="padding: 2px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 2px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 2px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -803,7 +802,7 @@ const resetForm = () => {
 
         </div>
 
-        <div class="modal-actions" style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="modal-actions" style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white; padding: 10px; font-weight: 600;">📥 Load to Dashboard</button>
           <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print Complete Report</button>
           <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1; padding: 10px;">Close</button>
@@ -1052,7 +1051,7 @@ const resetForm = () => {
 @media print {
   @page {
     size: A4;
-    margin: 5mm 8mm;
+    margin: 4mm 6mm;
   }
   
   body, html {
@@ -1106,30 +1105,39 @@ const resetForm = () => {
   .report-section-box {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 4px !important;
-    padding: 6px 8px !important;
+    margin-bottom: 3px !important;
+    padding: 4px 6px !important;
     border: 1px solid #94a3b8 !important;
     background: #ffffff !important;
   }
 
   .report-title {
-    font-size: 11px !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
     color: #000 !important;
-    margin: 0 0 3px 0 !important;
+    margin: 0 0 2px 0 !important;
   }
 
   .snapshot-grid-box {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 4px !important;
+    gap: 2px !important;
+    font-size: 9px !important;
+  }
+
+  .report-timestamp {
+    font-size: 8px !important;
+    margin-top: 2px !important;
+  }
+
+  .report-highlight-text {
     font-size: 10px !important;
   }
 
   .report-data-table th, 
   .report-data-table td {
-    padding: 3px 5px !important;
-    font-size: 10px !important;
+    padding: 2px 4px !important;
+    font-size: 9px !important;
     border: 1px solid #cbd5e1 !important;
   }
 
@@ -1140,18 +1148,18 @@ const resetForm = () => {
   }
 
   .math-step-item {
-    font-size: 10px !important;
-    margin-bottom: 4px !important;
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
   }
 
   .math-code-box {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
-    padding: 3px 6px !important;
+    padding: 2px 4px !important;
     font-family: monospace !important;
-    font-size: 10px !important;
-    border-radius: 3px !important;
-    margin-top: 2px !important;
+    font-size: 9px !important;
+    border-radius: 2px !important;
+    margin-top: 1px !important;
   }
 }
 </style>
