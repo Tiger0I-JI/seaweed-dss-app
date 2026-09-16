@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { supabase } from './supabase'
 
 const form = ref({
@@ -266,19 +266,7 @@ const runConstraintScreeningAndTopsis = () => {
   }
 }
 
-// Real-time Reactive Watcher: Updates calculations instantly whenever sliders/inputs change
-watch(form, () => {
-  const res = runConstraintScreeningAndTopsis()
-  latestResult.value = {
-    config: res.text,
-    score: res.score,
-    reason: res.reason,
-    rankings: res.rankings,
-    steps: res.steps
-  }
-}, { deep: true, immediate: true })
-
-// Database Operations with Smooth Loading & Toast
+// Database Operations with Smooth Loading & Toast (Calculations run ONLY upon clicking Run Engine)
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
@@ -304,6 +292,7 @@ const saveEvaluation = async () => {
       triggerToast('New evaluation recorded successfully!', 'success')
     }
 
+    // Update active UI results only when Run button is clicked
     latestResult.value = {
       config: recommendationResult,
       score: resultObj.score,
@@ -336,6 +325,15 @@ const fetchEvaluations = async () => {
 
 onMounted(() => {
   fetchEvaluations()
+  // Initial run on load to populate default state
+  const initialRes = runConstraintScreeningAndTopsis()
+  latestResult.value = {
+    config: initialRes.text,
+    score: initialRes.score,
+    reason: initialRes.reason,
+    rankings: initialRes.rankings,
+    steps: initialRes.steps
+  }
 })
 
 const editEvaluation = (item) => {
@@ -762,7 +760,7 @@ const resetForm = () => {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
           <div>
             <h3 style="margin: 0; font-size: 1.35rem; color: #1e293b;">📐 TOPSIS & Constraint Screening: Live Mathematical Breakdown</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Step-by-step calculations with live operational numbers based on your current inputs.</p>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Step-by-step calculations with live operational numbers based on your latest run.</p>
           </div>
           <button @click="showMatrixModal = false" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;">✕</button>
         </div>
@@ -783,7 +781,7 @@ const resetForm = () => {
           <!-- Step 1: Constraint Screening -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 1: Constraint-Based Feasibility Screening</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Checking user resources: Budget ≤ <strong>{{ form.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ form.labor }} Workers</strong>, Space ≤ <strong>{{ form.space }} m²</strong>.</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Checking user resources from latest run: Budget ≤ <strong>{{ form.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ form.labor }} Workers</strong>, Space ≤ <strong>{{ form.space }} m²</strong>.</p>
             <div style="background: #e0e7ff; color: #3730a3; padding: 10px; border-radius: 6px; font-weight: 600;">
               ✨ Result: {{ latestResult.steps.feasibleCount || 4 }} out of 4 Alternative Configurations passed the constraint screening.
             </div>
@@ -828,7 +826,7 @@ const resetForm = () => {
           <!-- Step 3: Weighted Normalized Matrix -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 3: Weighted Normalized Matrix (v<sub>ij</sub> = r<sub>ij</sub> × W<sub>j</sub>)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Live Normalized Criteria Weights (W<sub>j</sub>) based on your slider settings (sum = 1.0):</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Live Normalized Criteria Weights (W<sub>j</sub>) from latest run (sum = 1.0):</p>
             <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-size: 12px;">
               Profit W₁ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[0] : 0.25).toFixed(4) }}</strong> | 
               Cost W₂ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[1] : 0.25).toFixed(4) }}</strong> | 
@@ -990,6 +988,7 @@ const resetForm = () => {
 }
 
 /* Clean Print Styling: Print formal evaluation report cleanly */
+@previous print { ... }
 @media print {
   body * {
     visibility: hidden !important;
