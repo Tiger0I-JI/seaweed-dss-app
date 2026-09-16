@@ -697,10 +697,10 @@ const resetForm = () => {
 
         <div v-if="selectedRecord" class="printable-report-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 10px; color: #334155;">
           
-          <!-- Section 1: Inputs (Using CSS Grid for clean separation both on screen & print) -->
+          <!-- Section 1: Inputs with robust CSS Grid class -->
           <div class="report-section-box" style="background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
             <h4 class="report-title" style="font-size: 12px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 11px;">
+            <div class="snapshot-grid-box">
               <div><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</div>
               <div><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</div>
               <div><strong>Available Space:</strong> {{ selectedRecord.space }} m²</div>
@@ -1040,6 +1040,14 @@ const resetForm = () => {
   margin-left: 4px;
 }
 
+/* Dedicated CSS Grid Box for Snapshot Section */
+.snapshot-grid-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 11px;
+}
+
 /* Professional Print Media Formatting: Strict Single Page A4 Output */
 @media print {
   @page {
@@ -1111,8 +1119,10 @@ const resetForm = () => {
     margin: 0 0 3px 0 !important;
   }
 
-  .report-table-grid td {
-    padding: 2px 0 !important;
+  .snapshot-grid-box {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px !important;
     font-size: 10px !important;
   }
 
