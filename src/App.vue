@@ -100,78 +100,10 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
-// Helper engine for specific record snapshot calculation
-const calculateRecordRankings = (budget, labor, space) => {
+// Universal Comprehensive Engine for any set of inputs/weights (used for historical records and live reports)
+const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s: 3, cap: 5 }) => {
   const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
-  if (feasible.length === 0) return []
-  if (feasible.length === 1) return [{ name: feasible[0].name, score: 1.0 }]
-
-  const sumWeights = form.value.weight_profit + form.value.weight_cost + form.value.weight_space + form.value.weight_capacity
-  const W = [
-    form.value.weight_profit / sumWeights,
-    form.value.weight_cost / sumWeights,
-    form.value.weight_space / sumWeights,
-    form.value.weight_capacity / sumWeights
-  ]
-
-  const numCriteria = W.length
-  const divisors = Array(numCriteria).fill(0)
   
-  feasible.forEach(alt => {
-    for (let j = 0; j < numCriteria; j++) divisors[j] += Math.pow(alt.criteria[j], 2)
-  })
-  for (let j = 0; j < numCriteria; j++) divisors[j] = Math.sqrt(divisors[j])
-
-  const normalizedMatrix = feasible.map(alt => ({
-    name: alt.name,
-    values: alt.criteria.map((val, j) => divisors[j] === 0 ? 0 : val / divisors[j])
-  }))
-
-  const weightedMatrix = normalizedMatrix.map(row => ({
-    name: row.name,
-    values: row.values.map((val, j) => val * W[j])
-  }))
-
-  const isMaxBenefit = [true, false, false, true]
-  const V_plus = Array(numCriteria).fill(0)
-  const V_minus = Array(numCriteria).fill(0)
-
-  for (let j = 0; j < numCriteria; j++) {
-    const columnValues = weightedMatrix.map(row => row.values[j])
-    if (isMaxBenefit[j]) {
-      V_plus[j] = Math.max(...columnValues)
-      V_minus[j] = Math.min(...columnValues)
-    } else {
-      V_plus[j] = Math.min(...columnValues)
-      V_minus[j] = Math.max(...columnValues)
-    }
-  }
-
-  let resultsList = []
-  weightedMatrix.forEach(row => {
-    let sPlusSq = 0, sMinusSq = 0
-    for (let j = 0; j < numCriteria; j++) {
-      sPlusSq += Math.pow(row.values[j] - V_plus[j], 2)
-      sMinusSq += Math.pow(row.values[j] - V_minus[j], 2)
-    }
-    const S_plus = Math.sqrt(sPlusSq)
-    const S_minus = Math.sqrt(sMinusSq)
-    const C_i = S_minus / (S_plus + S_minus)
-    resultsList.push({ name: row.name, score: C_i })
-  })
-
-  resultsList.sort((a, b) => b.score - a.score)
-  return resultsList
-}
-
-// Constraint Screening & TOPSIS Decision Engine with Full Step Breakdown
-const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
-  const feasible = alternatives.filter(alt => 
-    alt.cost <= targetForm.budget && 
-    alt.space <= targetForm.space && 
-    alt.labor <= targetForm.labor
-  )
-
   if (feasible.length === 0) {
     return {
       text: 'Infeasible: Exceeds Constraints',
@@ -192,17 +124,11 @@ const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
     }
   }
 
-  const sumWeights = targetForm.weight_profit + targetForm.weight_cost + targetForm.weight_space + targetForm.weight_capacity
-  const W = [
-    targetForm.weight_profit / sumWeights,
-    targetForm.weight_cost / sumWeights,
-    targetForm.weight_space / sumWeights,
-    targetForm.weight_capacity / sumWeights
-  ]
+  const sumWeights = weights.p + weights.c + weights.s + weights.cap
+  const W = [weights.p / sumWeights, weights.c / sumWeights, weights.s / sumWeights, weights.cap / sumWeights]
 
   const numCriteria = W.length
   const divisors = Array(numCriteria).fill(0)
-  
   feasible.forEach(alt => {
     for (let j = 0; j < numCriteria; j++) divisors[j] += Math.pow(alt.criteria[j], 2)
   })
@@ -237,15 +163,13 @@ const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
   let distanceDetails = []
 
   weightedMatrix.forEach((row) => {
-    let sPlusSq = 0
-    let sMinusSq = 0
+    let sPlusSq = 0, sMinusSq = 0
     for (let j = 0; j < numCriteria; j++) {
       sPlusSq += Math.pow(row.values[j] - V_plus[j], 2)
       sMinusSq += Math.pow(row.values[j] - V_minus[j], 2)
     }
     const S_plus = Math.sqrt(sPlusSq)
     const S_minus = Math.sqrt(sMinusSq)
-    
     const C_i = S_minus / (S_plus + S_minus)
     resultsList.push({ name: row.name, score: C_i })
     distanceDetails.push({ name: row.name, sPlus: S_plus, sMinus: S_minus, score: C_i })
@@ -257,7 +181,7 @@ const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
   return {
     text: `${best.name} (TOPSIS Score: ${best.score.toFixed(4)})`,
     score: best.score.toFixed(4),
-    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. It achieved the highest closeness coefficient based on your defined criteria preferences (Profit: ${targetForm.weight_profit}, Cost: ${targetForm.weight_cost}, Space: ${targetForm.weight_space}, Capacity: ${targetForm.weight_capacity}).`,
+    reason: `Passed constraint screening among ${feasible.length} feasible alternatives. Achieved highest closeness coefficient.`,
     rankings: resultsList,
     steps: {
       normalized: normalizedMatrix,
@@ -276,9 +200,9 @@ const runConstraintScreeningAndTopsis = (targetForm = form.value) => {
 const saveEvaluation = async () => {
   isProcessing.value = true
   try {
-    // Capture the exact input snapshot at the moment of running
     const currentInputSnapshot = { ...form.value }
-    const resultObj = runConstraintScreeningAndTopsis(currentInputSnapshot)
+    const weightsObj = { p: currentInputSnapshot.weight_profit, c: currentInputSnapshot.weight_cost, s: currentInputSnapshot.weight_space, cap: currentInputSnapshot.weight_capacity }
+    const resultObj = calculateDetailedEngine(currentInputSnapshot.budget, currentInputSnapshot.labor, currentInputSnapshot.space, weightsObj)
     const recommendationResult = resultObj.text
 
     const payload = {
@@ -300,7 +224,6 @@ const saveEvaluation = async () => {
       triggerToast('New evaluation recorded successfully!', 'success')
     }
 
-    // Lock in the latest result and its exact input snapshot for display and matrix breakdown
     latestResult.value = {
       config: recommendationResult,
       score: resultObj.score,
@@ -339,9 +262,8 @@ const fetchEvaluations = async () => {
 
 onMounted(() => {
   fetchEvaluations()
-  // Initial run on load to populate default state snapshot
   const initialInput = { ...form.value }
-  const initialRes = runConstraintScreeningAndTopsis(initialInput)
+  const initialRes = calculateDetailedEngine(initialInput.budget, initialInput.labor, initialInput.space, { p: initialInput.weight_profit, c: initialInput.weight_cost, s: initialInput.weight_space, cap: initialInput.weight_capacity })
   latestResult.value = {
     config: initialRes.text,
     score: initialRes.score,
@@ -392,7 +314,7 @@ const loadRecordToDashboard = (item) => {
     weight_capacity: 5
   }
   showDetailModal.value = false
-  triggerToast('Historical parameters loaded into main dashboard!', 'success')
+  triggerToast('Historical parameters loaded into main dashboard!', 'info')
 }
 
 const printSingleRecord = (item) => {
@@ -679,7 +601,7 @@ const resetForm = () => {
                 </span>
               </td>
               <td class="action-cell">
-                <button class="btn-icon btn-print" @click="printSingleRecord(item)" style="background: #e0e7ff; color: #3730a3; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px; font-weight: 600;">Print</button>
+                <button class="btn-icon btn-print" @click="printSingleRecord(item)" style="background: #e0e7ff; color: #3730a3; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px; font-weight: 600;">Print Report</button>
                 <button class="btn-icon btn-view" @click="viewDetails(item)">View</button>
                 <button class="btn-icon btn-edit" @click="editEvaluation(item)">Edit</button>
                 <button class="btn-icon btn-delete" @click="deleteEvaluation(item.id)">Del</button>
@@ -716,66 +638,134 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- 2. Detail Popup Modal -->
+    <!-- 2. Detail Popup Modal & Comprehensive Printable Report -->
     <div v-if="showDetailModal" class="modal-overlay printable-modal-overlay" @click.self="closeDetailModal">
-      <div class="modal-content printable-modal-content" style="max-width: 720px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
+      <div class="modal-content printable-modal-content" style="max-width: 820px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
-          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1e293b;">Evaluation Record Details & Rankings</h3>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1e293b;">Official Evaluation & TOPSIS Report</h3>
           <button @click="closeDetailModal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
         </div>
 
-        <div class="print-only-title" style="display: none; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 8px;">
-          <h2 style="margin: 0; font-size: 20px; color: #1e293b;">Seaweed Snack Production Technology Licensing DSS</h2>
-          <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Official Evaluation & TOPSIS Decision Report</p>
+        <!-- Print-Only Header -->
+        <div class="print-only-title" style="display: none; margin-bottom: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 10px;">
+          <h2 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">Seaweed Snack Production Technology Licensing DSS</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #475569;">Official Comprehensive Evaluation & TOPSIS Mathematical Report</p>
         </div>
 
-        <div v-if="selectedRecord" class="modal-body" style="font-size: 14px; display: flex; flex-direction: column; gap: 20px;">
-          <div style="background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
-            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; color: #334155;">
+        <div v-if="selectedRecord" class="modal-body" style="font-size: 13px; display: flex; flex-direction: column; gap: 20px; color: #334155;">
+          
+          <!-- Section 1: Inputs -->
+          <div style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">1. Input Resource Constraints Snapshot</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
               <p style="margin: 0;"><strong>Investment Budget:</strong> {{ selectedRecord.budget.toLocaleString() }} THB</p>
               <p style="margin: 0;"><strong>Available Workforce:</strong> {{ selectedRecord.labor }} Workers</p>
               <p style="margin: 0;"><strong>Available Space:</strong> {{ selectedRecord.space }} m²</p>
               <p style="margin: 0;"><strong>Target Capacity:</strong> {{ selectedRecord.target_capacity.toLocaleString() }} Units</p>
             </div>
-            <p style="font-size: 12px; color: #64748b; margin-top: 10px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
+          <!-- Section 2: Recommendation -->
           <div>
-            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 6px; font-weight: 700;">2. Final Decision Recommendation</h4>
-            <p style="font-size: 15px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
+            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 4px; font-weight: 700;">2. Final Recommended Configuration</h4>
+            <p style="font-size: 14px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
           </div>
 
+          <!-- Section 3: Rankings Table -->
           <div>
-            <h4 style="font-size: 15px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings for this Record</h4>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 8px; font-weight: 700;">3. Complete TOPSIS Closeness Coefficient (Ci) Rankings</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
               <thead>
                 <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; color: #475569;">
-                  <th style="padding: 10px;">Rank</th>
-                  <th style="padding: 10px;">Alternative Configuration</th>
-                  <th style="padding: 10px; text-align: right;">Ci Score</th>
+                  <th style="padding: 8px;">Rank</th>
+                  <th style="padding: 8px;">Alternative Configuration</th>
+                  <th style="padding: 8px; text-align: right;">Ci Score</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(r, idx) in calculateRecordRankings(selectedRecord.budget, selectedRecord.labor, selectedRecord.space)" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 10px; font-weight: bold;">#{{ idx + 1 }}</td>
-                  <td style="padding: 10px; font-weight: 500;">{{ r.name }}</td>
-                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
+                <tr v-for="(r, idx) in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings" :key="r.name" style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 8px; font-weight: bold;">#{{ idx + 1 }}</td>
+                  <td style="padding: 8px; font-weight: 500;">{{ r.name }}</td>
+                  <td style="padding: 8px; text-align: right; font-weight: bold; color: #4f46e5;">{{ r.score.toFixed(4) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <!-- Section 4: Full Step-by-Step Mathematical Derivation (Included in Print!) -->
+          <div style="border-top: 2px dashed #cbd5e1; padding-top: 16px;">
+            <h4 style="font-size: 14px; color: #1e293b; margin-top: 0; margin-bottom: 10px; font-weight: 700;">4. TOPSIS Mathematical Derivation Breakdown</h4>
+            
+            <!-- Step 1 & 2: Divisors & Normalization -->
+            <div style="margin-bottom: 12px;">
+              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Step 2: Vector Normalization Divisors (RMS)</p>
+              <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 11px;">
+                [ {{ calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.divisors.map(d => d.toFixed(2)).join(', ') }} ]
+              </div>
+            </div>
+
+            <!-- Step 3: Weighted Matrix -->
+            <div style="margin-bottom: 12px;" v-if="calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted.length > 0">
+              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Step 3: Weighted Normalized Matrix (v_ij)</p>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 6px;">Configuration</th>
+                    <th style="padding: 6px; text-align: center;">v_i1 (Profit)</th>
+                    <th style="padding: 6px; text-align: center;">v_i2 (Cost)</th>
+                    <th style="padding: 6px; text-align: center;">v_i3 (Space)</th>
+                    <th style="padding: 6px; text-align: center;">v_i4 (Capacity)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.weighted" :key="row.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px; font-weight: 500;">{{ row.name }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ row.values[0].toFixed(4) }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ row.values[1].toFixed(4) }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ row.values[2].toFixed(4) }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ row.values[3].toFixed(4) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Step 4, 5, 6: Ideal Best/Worst & Distances -->
+            <div>
+              <p style="margin: 0 0 6px 0; font-weight: 600; color: #475569;">Steps 4-6: Euclidean Distances (S⁺, S⁻) & Final Ci Scores</p>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #475569;">
+                    <th style="padding: 6px;">Configuration</th>
+                    <th style="padding: 6px; text-align: center;">S⁺ (Dist. Best)</th>
+                    <th style="padding: 6px; text-align: center;">S⁻ (Dist. Worst)</th>
+                    <th style="padding: 6px; text-align: center;">Ci Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="d in calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).steps.distances" :key="d.name" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px; font-weight: 500;">{{ d.name }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ d.sPlus.toFixed(4) }}</td>
+                    <td style="padding: 6px; text-align: center;">{{ d.sMinus.toFixed(4) }}</td>
+                    <td style="padding: 6px; text-align: center; font-weight: bold; color: #4f46e5;">{{ d.score.toFixed(4) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
         </div>
 
         <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-primary no-print" @click="loadRecordToDashboard(selectedRecord)" style="flex: 2; background: #4f46e5; color: white; padding: 10px; font-weight: 600;">📥 Load to Dashboard</button>
-          <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print</button>
+          <button class="btn btn-secondary no-print" @click="printSingleRecord(selectedRecord)" style="flex: 1; background: #e0e7ff; color: #3730a3; border: none; padding: 10px; font-weight: 600;">🖨️ Print Complete Report</button>
           <button class="btn btn-secondary no-print" @click="closeDetailModal" style="flex: 1; padding: 10px;">Close</button>
         </div>
       </div>
     </div>
 
-    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Displays Latest Run Snapshot) -->
+    <!-- 3. Full Step-by-Step Mathematical Derivation Modal (Live Run Breakdown) -->
     <div v-if="showMatrixModal" class="modal-overlay no-print" @click.self="showMatrixModal = false">
       <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
@@ -799,7 +789,7 @@ const resetForm = () => {
             </ul>
           </div>
 
-          <!-- Step 1: Constraint Screening (Using Snapshot Inputs) -->
+          <!-- Step 1 -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 1: Constraint-Based Feasibility Screening</h4>
             <p style="color: #64748b; margin-bottom: 8px;">Checking latest run resources: Budget ≤ <strong>{{ latestResult.inputs.budget.toLocaleString() }} THB</strong>, Workforce ≤ <strong>{{ latestResult.inputs.labor }} Workers</strong>, Space ≤ <strong>{{ latestResult.inputs.space }} m²</strong>.</p>
@@ -808,10 +798,10 @@ const resetForm = () => {
             </div>
           </div>
 
-          <!-- Step 2: Vector Normalization & Live Divisors -->
+          <!-- Step 2 -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 2: Vector Normalization (r<sub>ij</sub>)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Formula: r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²). Square root divisors (denominator) computed from the latest run:</p>
+            <p style="color: #64748b; margin-bottom: 8px;">Formula: r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²). Square root divisors (denominator):</p>
             <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-family: monospace; font-size: 12px;">
               Divisors (RMS denominators): [ 
                 {{ latestResult.steps.divisors ? latestResult.steps.divisors.map(d => d.toFixed(2)).join(', ') : '0, 0, 0, 0' }} 
@@ -844,10 +834,9 @@ const resetForm = () => {
             </div>
           </div>
 
-          <!-- Step 3: Weighted Normalized Matrix -->
+          <!-- Step 3 -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 3: Weighted Normalized Matrix (v<sub>ij</sub> = r<sub>ij</sub> × W<sub>j</sub>)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Normalized Criteria Weights (W<sub>j</sub>) from latest run (sum = 1.0):</p>
             <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-size: 12px;">
               Profit W₁ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[0] : 0.25).toFixed(4) }}</strong> | 
               Cost W₂ = <strong>{{ (latestResult.steps.weights ? latestResult.steps.weights[1] : 0.25).toFixed(4) }}</strong> | 
@@ -881,21 +870,18 @@ const resetForm = () => {
             </div>
           </div>
 
-          <!-- Step 4: Ideal Best and Worst Solutions -->
+          <!-- Step 4 -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Step 4: Ideal Best (A⁺) and Ideal Worst (A⁻) Solutions</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Derived from max/min values of the weighted matrix based on benefit/cost criteria types.</p>
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 12px;">
               <p style="margin: 0;"><strong>A⁺ (Ideal Best):</strong> [ {{ latestResult.steps.vPlus.map(v => v.toFixed(4)).join(', ') }} ]</p>
               <p style="margin: 6px 0 0 0;"><strong>A⁻ (Ideal Worst):</strong> [ {{ latestResult.steps.vMinus.map(v => v.toFixed(4)).join(', ') }} ]</p>
             </div>
           </div>
 
-          <!-- Step 5 & 6: Euclidean Distances & Closeness Coefficients -->
+          <!-- Step 5 & 6 -->
           <div style="background: #ffffff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <h4 style="color: #1e293b; font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 6px;">Steps 5 & 6: Euclidean Separation (S⁺, S⁻) & Closeness Coefficient (Cᵢ)</h4>
-            <p style="color: #64748b; margin-bottom: 8px;">Formula: Cᵢ = S⁻ / (S⁺ + S⁻). Higher Cᵢ score indicates closer proximity to the ideal best solution.</p>
-            
             <div v-if="latestResult.steps && latestResult.steps.distances && latestResult.steps.distances.length > 0">
               <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
@@ -1008,7 +994,7 @@ const resetForm = () => {
   margin-left: 4px;
 }
 
-/* Clean Print Styling: Print formal evaluation report cleanly */
+/* Clean Print Styling: Print formal comprehensive report cleanly */
 @media print {
   body * {
     visibility: hidden !important;
@@ -1024,21 +1010,20 @@ const resetForm = () => {
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
     background: white !important;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 20px;
+    display: block !important;
   }
 
   .printable-modal-content {
     box-shadow: none !important;
     border: none !important;
     width: 100% !important;
-    max-width: 700px !important;
+    max-width: 100% !important;
     background: white !important;
-    padding: 0 !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   .print-only-title {
