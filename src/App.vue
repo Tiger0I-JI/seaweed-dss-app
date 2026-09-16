@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { supabase } from './supabase'
 
 const form = ref({
@@ -266,6 +266,18 @@ const runConstraintScreeningAndTopsis = () => {
   }
 }
 
+// Real-time Reactive Watcher: Updates calculations instantly whenever sliders/inputs change
+watch(form, () => {
+  const res = runConstraintScreeningAndTopsis()
+  latestResult.value = {
+    config: res.text,
+    score: res.score,
+    reason: res.reason,
+    rankings: res.rankings,
+    steps: res.steps
+  }
+}, { deep: true, immediate: true })
+
 // Database Operations with Smooth Loading & Toast
 const saveEvaluation = async () => {
   isProcessing.value = true
@@ -324,10 +336,6 @@ const fetchEvaluations = async () => {
 
 onMounted(() => {
   fetchEvaluations()
-  // Run initial calculation so the derivation modal has live numbers immediately on load
-  const initialRes = runConstraintScreeningAndTopsis()
-  latestResult.value.steps = initialRes.steps
-  latestResult.value.rankings = initialRes.rankings
 })
 
 const editEvaluation = (item) => {
@@ -364,14 +372,6 @@ const loadRecordToDashboard = (item) => {
     weight_space: 3,
     weight_capacity: 5
   }
-  const res = runConstraintScreeningAndTopsis()
-  latestResult.value = {
-    config: item.recommended_config,
-    score: res.score,
-    reason: res.reason,
-    rankings: res.rankings,
-    steps: res.steps
-  }
   showDetailModal.value = false
   triggerToast('Historical parameters loaded into main dashboard!', 'success')
 }
@@ -396,13 +396,6 @@ const closeDetailModal = () => {
 const resetForm = () => {
   form.value = { budget: 1500000, labor: 15, space: 100, target_capacity: 5000, weight_profit: 4, weight_cost: 4, weight_space: 3, weight_capacity: 5 }
   editingId.value = null
-}
-
-const openMatrixModal = () => {
-  // Ensure fresh calculation before opening modal
-  const res = runConstraintScreeningAndTopsis()
-  latestResult.value.steps = res.steps
-  showMatrixModal.value = true
 }
 </script>
 
@@ -581,7 +574,7 @@ const openMatrixModal = () => {
       <div class="form-actions" style="display: flex; gap: 10px; align-items: center;">
         <button class="btn btn-primary" @click="saveEvaluation" :disabled="isProcessing" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <span v-if="isProcessing" class="spinner"></span>
-          <span>{{ isProcessing ? 'Processing Engine...' : (editingId ? 'Update & Re-run Engine' : 'Run Decision Engine') }}</span>
+          <span>{{ isProcessing ? 'Processing Engine...' : (editingId ? 'Update & Re-run Engine' : 'Run Decision Engine & Save') }}</span>
         </button>
         <button class="btn btn-secondary" @click="resetForm" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
           Reset Defaults
@@ -599,7 +592,7 @@ const openMatrixModal = () => {
           <span>📊</span> Comparative Evaluation & TOPSIS Ranking Results
         </h2>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <button @click="openMatrixModal" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; background: #4f46e5; color: white; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(79,70,229,0.3);">
+          <button @click="showMatrixModal = true" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; background: #4f46e5; color: white; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(79,70,229,0.3);">
             📐 View Full Step-by-Step Mathematical Derivation
           </button>
           <span class="tooltip-target" style="background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a7f3d0; cursor: help;">
