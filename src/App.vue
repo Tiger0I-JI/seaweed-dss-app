@@ -100,7 +100,7 @@ const getAlternativeBadge = (name) => {
   return { text: 'Standard', bg: '#f1f5f9', color: '#475569' }
 }
 
-// Universal Comprehensive Engine for any set of inputs/weights
+// Universal Comprehensive Engine
 const calculateDetailedEngine = (budget, labor, space, weights = { p: 4, c: 4, s: 3, cap: 5 }) => {
   const feasible = alternatives.filter(alt => alt.cost <= budget && alt.space <= space && alt.labor <= labor)
   
@@ -667,10 +667,12 @@ const resetForm = () => {
             <p style="font-size: 10px; color: #64748b; margin-top: 6px; margin-bottom: 0;"><strong>Timestamp:</strong> {{ new Date(selectedRecord.created_at).toLocaleString() }}</p>
           </div>
 
-          <!-- Section 2: Recommendation -->
+          <!-- Section 2: Recommendation (Directly derived from calculation ranking to ensure 100% match) -->
           <div class="print-card-box" style="background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1;">
             <h4 style="font-size: 13px; color: #1e293b; margin-top: 0; margin-bottom: 2px; font-weight: 700;">2. Final Recommended Configuration</h4>
-            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">{{ selectedRecord.recommended_config }}</p>
+            <p style="font-size: 13px; margin: 0; color: #2563eb; font-weight: bold;">
+              {{ calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings.length > 0 ? `${calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings[0].name} (TOPSIS Score: ${calculateDetailedEngine(selectedRecord.budget, selectedRecord.labor, selectedRecord.space).rankings[0].score.toFixed(4)})` : selectedRecord.recommended_config }}
+            </p>
           </div>
 
           <!-- Section 3: Rankings Table -->
@@ -996,7 +998,7 @@ const resetForm = () => {
 @media print {
   @page {
     size: A4;
-    margin: 10mm 12mm;
+    margin: 8mm 10mm;
   }
   
   body, html {
@@ -1048,8 +1050,8 @@ const resetForm = () => {
   .print-card-box {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 10px !important;
-    border: 1px solid #94a3b8 !important;
+    margin-bottom: 8px !important;
+    border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
   }
 
