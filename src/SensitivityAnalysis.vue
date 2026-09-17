@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <!-- Slider 2: Labor Cost Variation -->
+      <!-- Slider 2: Labor Cost Variation with Alternative Limits Listed Below -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Labor Cost Variation</label>
@@ -50,15 +50,18 @@
           </span>
         </div>
         <input type="range" min="0" max="100" step="5" v-model.number="laborCostFactor" style="width: 100%; cursor: pointer;" />
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
-          <span>0% (Standard)</span>
-          <span style="color: #d97706; font-weight: 600;">Global Limit 10%</span>
-          <span style="color: #dc2626; font-weight: 600;">Global Limit 20%</span>
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b; font-weight: 600; flex-wrap: wrap; gap: 2px;">
+          <span>0%</span>
+          <span style="color: #b91c1c;" title="Labor-Oriented Limit">A1: +{{ evaluatedAlternatives[0].limit10 }}%</span>
+          <span style="color: #b91c1c;" title="Space-Efficient Limit">A3: +{{ evaluatedAlternatives[2].limit10 }}%</span>
+          <span style="color: #b91c1c;" title="Machine-Oriented Limit">A2: +{{ evaluatedAlternatives[1].limit10 }}%</span>
+          <span style="color: #b91c1c;" title="Flexible Mfg Limit">A4: +{{ evaluatedAlternatives[3].limit10 }}%</span>
+          <span>+100%</span>
         </div>
       </div>
     </div>
 
-    <!-- Results Table with Individual Cost Variance Limits -->
+    <!-- Results Table -->
     <div style="overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
         <thead>
@@ -66,7 +69,6 @@
             <th style="padding: 12px; font-weight: 600; border-top-left-radius: 8px;">Configuration Name</th>
             <th style="padding: 12px; font-weight: 600; text-align: center;">Base Cost</th>
             <th style="padding: 12px; font-weight: 600; text-align: center; color: #1d4ed8;">Adjusted Cost</th>
-            <th style="padding: 12px; font-weight: 600; text-align: center; color: #b45309;">Cost Risk Limits (10% / 20%)</th>
             <th style="padding: 12px; font-weight: 600; border-top-right-radius: 8px; text-align: center;">Operational Status</th>
           </tr>
         </thead>
@@ -79,11 +81,6 @@
               <span v-if="alt.costIncreasePercent > 0" style="color: #dc2626; font-size: 11px; margin-left: 4px;">
                 (+{{ alt.costIncreasePercent }}%)
               </span>
-            </td>
-            <!-- Displaying specific variance limits for each alternative -->
-            <td style="padding: 12px; text-align: center; font-size: 12px; color: #475569;">
-              <span style="color: #d97706; font-weight: 600;">+{{ alt.limit10 }}%</span> / 
-              <span style="color: #dc2626; font-weight: 600;">+{{ alt.limit20 }}%</span>
             </td>
             <td style="padding: 12px; text-align: center;">
               <span :style="{ backgroundColor: alt.statusBg, color: alt.statusColor, padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', border: '1px solid ' + alt.statusBorder }">
@@ -115,18 +112,13 @@ const evaluatedAlternatives = computed(() => {
   const currentDemand = baseDemand * (1 + demandFactor.value / 100)
 
   return baseAlternatives.map(alt => {
-    // Labor cost weight component (Workforce * 5,000 THB baseline estimation)
     const laborWeight = alt.workforce * 5000 
     const extraLaborCost = laborWeight * (laborCostFactor.value / 100)
     const adjustedCost = Math.round(alt.baseCost + extraLaborCost)
     const costIncreasePercent = (extraLaborCost / alt.baseCost) * 100
 
-    // Calculate exact percentage increase needed on baseCost to reach 10% and 20% of total structure or standard threshold
-    // Since laborWeight / baseCost defines the sensitivity ratio:
-    const sensitivityRatio = laborWeight / alt.baseCost
-    // Exact percentage of laborCostFactor that causes a 10% and 20% overall cost increase:
+    // Calculate exact percentage increase needed on baseCost to reach 10% risk threshold
     const limit10 = Math.round(( (alt.baseCost * 0.10) / laborWeight ) * 100)
-    const limit20 = Math.round(( (alt.baseCost * 0.20) / laborWeight ) * 100)
 
     let statusText = '✅ Stable'
     let statusBg = '#dcfce7'
@@ -155,7 +147,6 @@ const evaluatedAlternatives = computed(() => {
       adjustedCost,
       costIncreasePercent: costIncreasePercent.toFixed(1),
       limit10,
-      limit20,
       statusText,
       statusBg,
       statusColor,
