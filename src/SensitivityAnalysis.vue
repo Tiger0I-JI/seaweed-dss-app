@@ -13,7 +13,6 @@
     <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
       Adjust risk parameters to evaluate the robustness and operational stability of each production alternative.
       <br/>
-      <!-- Added explicit Baseline Assumption Note -->
       <span style="display: inline-block; margin-top: 10px; background-color: #f8fafc; color: #475569; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #e2e8f0; border-left: 3px solid #3b82f6;">
         💡 <strong>Baseline Assumption:</strong> Initial Market Demand is set to <strong>5,000 Units/Month</strong> (matching A1 capacity threshold).
       </span>
@@ -21,7 +20,7 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-      <!-- Slider 1: Demand Fluctuation (Max up to 1000% to break A4 limit) -->
+      <!-- Slider 1: Demand Fluctuation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
@@ -38,7 +37,7 @@
         </div>
       </div>
 
-      <!-- Slider 2: Labor Cost Variation (Max up to 100%) -->
+      <!-- Slider 2: Labor Cost Variation with Defined Limits -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Labor Cost Variation</label>
@@ -49,8 +48,8 @@
         <input type="range" min="0" max="100" step="5" v-model.number="laborCostFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
           <span>0% (Standard)</span>
-          <span>+50%</span>
-          <span>+100% (Double Wage)</span>
+          <span style="color: #d97706; font-weight: 600;">Limit 10% (Risk)</span>
+          <span style="color: #dc2626; font-weight: 600;">Limit 20% (Critical)</span>
         </div>
       </div>
     </div>
@@ -120,7 +119,14 @@ const evaluatedAlternatives = computed(() => {
       statusBg = '#fee2e2'
       statusColor = '#991b1b'
       statusBorder = '#fecaca'
+    } else if (costIncreasePercent >= 20) {
+      // Critical Limit (> 20% cost overrun)
+      statusText = '🚨 Critical Cost Overrun'
+      statusBg = '#fee2e2'
+      statusColor = '#b91c1c'
+      statusBorder = '#fecaca'
     } else if (costIncreasePercent >= 10) {
+      // Warning Limit (10% - 20% cost risk)
       statusText = '⚠️ High Cost Risk'
       statusBg = '#ffedd5'
       statusColor = '#9a3412'
