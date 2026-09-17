@@ -12,27 +12,33 @@
     
     <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
       Adjust risk parameters to evaluate the robustness and operational stability of each production alternative.
+      <br/>
+      <!-- Added explicit Baseline Assumption Note -->
+      <span style="display: inline-block; margin-top: 10px; background-color: #f8fafc; color: #475569; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #e2e8f0; border-left: 3px solid #3b82f6;">
+        💡 <strong>Baseline Assumption:</strong> Initial Market Demand is set to <strong>5,000 Units/Month</strong> (matching A1 capacity threshold).
+      </span>
     </p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-      <!-- Slider 1: Demand Fluctuation (Max up to 800%) -->
+      <!-- Slider 1: Demand Fluctuation (Max up to 1000% to break A4 limit) -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
           <span style="background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">
-            {{ demandFactor > 0 ? '+' : '' }}{{ demandFactor }}%
+            {{ demandFactor > 0 ? '+' : '' }}{{ demandFactor }}% 
+            <span style="font-weight: 500; opacity: 0.8;">({{ (5000 * (1 + demandFactor / 100)).toLocaleString() }} Units)</span>
           </span>
         </div>
-        <input type="range" min="-50" max="800" step="10" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
+        <input type="range" min="-50" max="1000" step="10" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
-          <span>-50% (Slowdown)</span>
-          <span>Base (0%)</span>
-          <span>+800% (Extreme Surge)</span>
+          <span>-50%</span>
+          <span>Base (5k Units)</span>
+          <span>+1000% (55k Units)</span>
         </div>
       </div>
 
-      <!-- Slider 2: Labor Cost Variation -->
+      <!-- Slider 2: Labor Cost Variation (Max up to 100%) -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Labor Cost Variation</label>
@@ -40,11 +46,11 @@
             +{{ laborCostFactor }}%
           </span>
         </div>
-        <input type="range" min="0" max="50" step="5" v-model.number="laborCostFactor" style="width: 100%; cursor: pointer;" />
+        <input type="range" min="0" max="100" step="5" v-model.number="laborCostFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
           <span>0% (Standard)</span>
-          <span>+25%</span>
-          <span>+50% (High Increase)</span>
+          <span>+50%</span>
+          <span>+100% (Double Wage)</span>
         </div>
       </div>
     </div>
@@ -65,13 +71,11 @@
             <td style="padding: 12px; color: #64748b; text-align: center;">{{ alt.baseCost.toLocaleString() }}</td>
             <td style="padding: 12px; font-weight: 700; color: #0f172a; text-align: center;">
               {{ alt.adjustedCost.toLocaleString() }} THB
-              <!-- Percentage Impact Indicator -->
               <span v-if="alt.costIncreasePercent > 0" style="color: #dc2626; font-size: 11px; margin-left: 6px;">
                 (+{{ alt.costIncreasePercent }}%)
               </span>
             </td>
             <td style="padding: 12px; text-align: center;">
-              <!-- Dynamic Status Badge based on BOTH Capacity and Cost -->
               <span :style="{ backgroundColor: alt.statusBg, color: alt.statusColor, padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', border: '1px solid ' + alt.statusBorder }">
                 {{ alt.statusText }}
               </span>
@@ -101,13 +105,11 @@ const evaluatedAlternatives = computed(() => {
   const currentDemand = baseDemand * (1 + demandFactor.value / 100)
 
   return baseAlternatives.map(alt => {
-    // Calculate new labor costs
     const laborWeight = alt.workforce * 5000 
     const extraLaborCost = laborWeight * (laborCostFactor.value / 100)
     const adjustedCost = Math.round(alt.baseCost + extraLaborCost)
     const costIncreasePercent = (extraLaborCost / alt.baseCost) * 100
 
-    // Evaluate Status Logic (Capacity Bottlenecks vs Cost Sensitivity)
     let statusText = '✅ Stable'
     let statusBg = '#dcfce7'
     let statusColor = '#166534'
@@ -119,7 +121,6 @@ const evaluatedAlternatives = computed(() => {
       statusColor = '#991b1b'
       statusBorder = '#fecaca'
     } else if (costIncreasePercent >= 10) {
-      // Triggers if labor cost inflates the configuration base cost by >= 10%
       statusText = '⚠️ High Cost Risk'
       statusBg = '#ffedd5'
       statusColor = '#9a3412'
