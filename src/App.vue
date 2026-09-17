@@ -4,7 +4,6 @@ import { supabase } from './supabase'
 
 import SensitivityAnalysis from './SensitivityAnalysis.vue'
 
-
 const form = ref({
   budget: 1500000,
   labor: 15,
@@ -660,6 +659,12 @@ const resetForm = () => {
       </div>
     </div>
 
+    <!-- ===== เพิ่ม SENSITIVITY ANALYSIS ไว้ตรงนี้ ===== -->
+    <div class="max-w-5xl mx-auto space-y-6">
+      <SensitivityAnalysis />
+    </div>
+    <!-- ============================================== -->
+
     <!-- 1. Result Popup Modal (Triggered on Run) -->
     <div v-if="showResultModal" class="modal-overlay no-print" @click.self="closeResultModal">
       <div class="modal-content animate-pop">
@@ -953,17 +958,6 @@ const resetForm = () => {
               </div>
             </div>
           </div>
-<template>
-  <div class="min-h-screen bg-gray-100 p-8">
-    <div class="max-w-5xl mx-auto space-y-6">
-      <!-- Your existing dashboard components / content -->
-      
-      <!-- Sensitivity Analysis placed at the bottom -->
-      <SensitivityAnalysis />
-    </div>
-  </div>
-</template>
-
         </div>
 
         <div class="modal-actions" style="margin-top: 24px;">
