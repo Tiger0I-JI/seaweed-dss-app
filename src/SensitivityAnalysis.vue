@@ -18,9 +18,10 @@
       </span>
     </p>
 
+    <!-- Sliders Section -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-      <!-- Slider 1: Market Demand Fluctuation with Alternative Capacity Limits -->
+      <!-- Slider 1: Market Demand Fluctuation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
@@ -40,7 +41,7 @@
         </div>
       </div>
 
-      <!-- Slider 2: Labor Cost Variation with Defined Limits -->
+      <!-- Slider 2: Labor Cost Variation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Labor Cost Variation</label>
@@ -51,31 +52,38 @@
         <input type="range" min="0" max="100" step="5" v-model.number="laborCostFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
           <span>0% (Standard)</span>
-          <span style="color: #d97706; font-weight: 600;">Limit 10% (Risk)</span>
-          <span style="color: #dc2626; font-weight: 600;">Limit 20% (Critical)</span>
+          <span style="color: #d97706; font-weight: 600;">Global Limit 10%</span>
+          <span style="color: #dc2626; font-weight: 600;">Global Limit 20%</span>
         </div>
       </div>
     </div>
 
+    <!-- Results Table with Individual Cost Variance Limits -->
     <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
         <thead>
           <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
             <th style="padding: 12px; font-weight: 600; border-top-left-radius: 8px;">Configuration Name</th>
-            <th style="padding: 12px; font-weight: 600; text-align: center;">Base Cost (THB)</th>
-            <th style="padding: 12px; font-weight: 600; text-align: center; color: #1d4ed8;">Adjusted Total Cost</th>
+            <th style="padding: 12px; font-weight: 600; text-align: center;">Base Cost</th>
+            <th style="padding: 12px; font-weight: 600; text-align: center; color: #1d4ed8;">Adjusted Cost</th>
+            <th style="padding: 12px; font-weight: 600; text-align: center; color: #b45309;">Cost Risk Limits (10% / 20%)</th>
             <th style="padding: 12px; font-weight: 600; border-top-right-radius: 8px; text-align: center;">Operational Status</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="alt in evaluatedAlternatives" :key="alt.name" style="border-bottom: 1px solid #f1f5f9;">
             <td style="padding: 12px; font-weight: 500; color: #1e293b;">{{ alt.name }}</td>
-            <td style="padding: 12px; color: #64748b; text-align: center;">{{ alt.baseCost.toLocaleString() }}</td>
+            <td style="padding: 12px; color: #64748b; text-align: center;">{{ alt.baseCost.toLocaleString() }} THB</td>
             <td style="padding: 12px; font-weight: 700; color: #0f172a; text-align: center;">
               {{ alt.adjustedCost.toLocaleString() }} THB
-              <span v-if="alt.costIncreasePercent > 0" style="color: #dc2626; font-size: 11px; margin-left: 6px;">
+              <span v-if="alt.costIncreasePercent > 0" style="color: #dc2626; font-size: 11px; margin-left: 4px;">
                 (+{{ alt.costIncreasePercent }}%)
               </span>
+            </td>
+            <!-- Displaying specific variance limits for each alternative -->
+            <td style="padding: 12px; text-align: center; font-size: 12px; color: #475569;">
+              <span style="color: #d97706; font-weight: 600;">+{{ alt.limit10 }}%</span> / 
+              <span style="color: #dc2626; font-weight: 600;">+{{ alt.limit20 }}%</span>
             </td>
             <td style="padding: 12px; text-align: center;">
               <span :style="{ backgroundColor: alt.statusBg, color: alt.statusColor, padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', border: '1px solid ' + alt.statusBorder }">
@@ -96,10 +104,10 @@ const demandFactor = ref(0)
 const laborCostFactor = ref(0)    
 
 const baseAlternatives = [
-  { name: 'Labor-Oriented Configuration (A1)', baseCost: 90000, workforce: 6, capacity: 5000 },
-  { name: 'Machine-Oriented Configuration (A2)', baseCost: 450000, workforce: 4, capacity: 30000 },
-  { name: 'Space-Efficient Layout Configuration (A3)', baseCost: 250000, workforce: 5, capacity: 15000 },
-  { name: 'Flexible Manufacturing Configuration (A4)', baseCost: 1200000, workforce: 8, capacity: 45000 }
+  { name: 'Labor-Oriented (A1)', baseCost: 90000, workforce: 6, capacity: 5000 },
+  { name: 'Machine-Oriented (A2)', baseCost: 450000, workforce: 4, capacity: 30000 },
+  { name: 'Space-Efficient (A3)', baseCost: 250000, workforce: 5, capacity: 15000 },
+  { name: 'Flexible Mfg (A4)', baseCost: 1200000, workforce: 8, capacity: 45000 }
 ]
 
 const evaluatedAlternatives = computed(() => {
@@ -107,10 +115,18 @@ const evaluatedAlternatives = computed(() => {
   const currentDemand = baseDemand * (1 + demandFactor.value / 100)
 
   return baseAlternatives.map(alt => {
+    // Labor cost weight component (Workforce * 5,000 THB baseline estimation)
     const laborWeight = alt.workforce * 5000 
     const extraLaborCost = laborWeight * (laborCostFactor.value / 100)
     const adjustedCost = Math.round(alt.baseCost + extraLaborCost)
     const costIncreasePercent = (extraLaborCost / alt.baseCost) * 100
+
+    // Calculate exact percentage increase needed on baseCost to reach 10% and 20% of total structure or standard threshold
+    // Since laborWeight / baseCost defines the sensitivity ratio:
+    const sensitivityRatio = laborWeight / alt.baseCost
+    // Exact percentage of laborCostFactor that causes a 10% and 20% overall cost increase:
+    const limit10 = Math.round(( (alt.baseCost * 0.10) / laborWeight ) * 100)
+    const limit20 = Math.round(( (alt.baseCost * 0.20) / laborWeight ) * 100)
 
     let statusText = '✅ Stable'
     let statusBg = '#dcfce7'
@@ -123,7 +139,7 @@ const evaluatedAlternatives = computed(() => {
       statusColor = '#991b1b'
       statusBorder = '#fecaca'
     } else if (costIncreasePercent >= 20) {
-      statusText = '🚨 Critical Cost Overrun'
+      statusText = '🚨 Critical Overrun'
       statusBg = '#fee2e2'
       statusColor = '#b91c1c'
       statusBorder = '#fecaca'
@@ -138,6 +154,8 @@ const evaluatedAlternatives = computed(() => {
       ...alt,
       adjustedCost,
       costIncreasePercent: costIncreasePercent.toFixed(1),
+      limit10,
+      limit20,
       statusText,
       statusBg,
       statusColor,
