@@ -1,8 +1,6 @@
 <template>
-  <!-- Main Card Container (Matches existing project styling) -->
   <div class="card no-print" style="margin-bottom: 24px;">
     
-    <!-- Card Header -->
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
         <span>📈</span> Sensitivity Analysis Module
@@ -12,15 +10,13 @@
       </span>
     </div>
     
-    <!-- Module Description -->
     <p style="color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 20px;">
       Adjust risk parameters to evaluate the robustness and operational stability of each production alternative.
     </p>
 
-    <!-- Sliders for Risk Parameters -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-           <!-- Slider 1: Demand Fluctuation -->
+      <!-- Slider 1: Demand Fluctuation (Max up to 800%) -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
@@ -28,7 +24,6 @@
             {{ demandFactor > 0 ? '+' : '' }}{{ demandFactor }}%
           </span>
         </div>
-        <!-- Changed max="100" to max="800" and step to "10" -->
         <input type="range" min="-50" max="800" step="10" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
           <span>-50% (Slowdown)</span>
@@ -36,7 +31,6 @@
           <span>+800% (Extreme Surge)</span>
         </div>
       </div>
-
 
       <!-- Slider 2: Labor Cost Variation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -55,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Results Table -->
     <div style="overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
         <thead>
@@ -63,7 +56,7 @@
             <th style="padding: 12px; font-weight: 600; border-top-left-radius: 8px;">Configuration Name</th>
             <th style="padding: 12px; font-weight: 600; text-align: center;">Base Cost (THB)</th>
             <th style="padding: 12px; font-weight: 600; text-align: center; color: #1d4ed8;">Adjusted Total Cost</th>
-            <th style="padding: 12px; font-weight: 600; border-top-right-radius: 8px; text-align: center;">Feasibility Status</th>
+            <th style="padding: 12px; font-weight: 600; border-top-right-radius: 8px; text-align: center;">Operational Status</th>
           </tr>
         </thead>
         <tbody>
@@ -72,14 +65,15 @@
             <td style="padding: 12px; color: #64748b; text-align: center;">{{ alt.baseCost.toLocaleString() }}</td>
             <td style="padding: 12px; font-weight: 700; color: #0f172a; text-align: center;">
               {{ alt.adjustedCost.toLocaleString() }} THB
+              <!-- Percentage Impact Indicator -->
+              <span v-if="alt.costIncreasePercent > 0" style="color: #dc2626; font-size: 11px; margin-left: 6px;">
+                (+{{ alt.costIncreasePercent }}%)
+              </span>
             </td>
             <td style="padding: 12px; text-align: center;">
-              <!-- Feasibility Status Badges -->
-              <span v-if="alt.isFeasible" style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid #bbf7d0;">
-                ✅ Feasible
-              </span>
-              <span v-else style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid #fecaca;">
-                ⚠️ Over Capacity
+              <!-- Dynamic Status Badge based on BOTH Capacity and Cost -->
+              <span :style="{ backgroundColor: alt.statusBg, color: alt.statusColor, padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', border: '1px solid ' + alt.statusBorder }">
+                {{ alt.statusText }}
               </span>
             </td>
           </tr>
@@ -92,11 +86,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 
-// Reactive state variables for sensitivity parameters
-const demandFactor = ref(0)       // Percentage change ranging from -50% to +100%
-const laborCostFactor = ref(0)    // Percentage increase in labor costs from 0% to +50%
+const demandFactor = ref(0)       
+const laborCostFactor = ref(0)    
 
-// Base configuration alternatives (matching project specifications)
 const baseAlternatives = [
   { name: 'Labor-Oriented Configuration (A1)', baseCost: 90000, workforce: 6, capacity: 5000 },
   { name: 'Machine-Oriented Configuration (A2)', baseCost: 450000, workforce: 4, capacity: 30000 },
@@ -104,26 +96,44 @@ const baseAlternatives = [
   { name: 'Flexible Manufacturing Configuration (A4)', baseCost: 1200000, workforce: 8, capacity: 45000 }
 ]
 
-// Computed property for real-time recalculation when sliders change
 const evaluatedAlternatives = computed(() => {
-  // Base demand starts at 5000 to match the A1 capacity threshold
   const baseDemand = 5000 
-  
   const currentDemand = baseDemand * (1 + demandFactor.value / 100)
 
   return baseAlternatives.map(alt => {
-    // Labor-heavy configurations are more sensitive to labor cost increases
+    // Calculate new labor costs
     const laborWeight = alt.workforce * 5000 
     const extraLaborCost = laborWeight * (laborCostFactor.value / 100)
     const adjustedCost = Math.round(alt.baseCost + extraLaborCost)
+    const costIncreasePercent = (extraLaborCost / alt.baseCost) * 100
 
-    // Check if configuration capacity satisfies current demand
-    const isFeasible = alt.capacity >= currentDemand
+    // Evaluate Status Logic (Capacity Bottlenecks vs Cost Sensitivity)
+    let statusText = '✅ Stable'
+    let statusBg = '#dcfce7'
+    let statusColor = '#166534'
+    let statusBorder = '#bbf7d0'
+
+    if (alt.capacity < currentDemand) {
+      statusText = '🛑 Bottleneck'
+      statusBg = '#fee2e2'
+      statusColor = '#991b1b'
+      statusBorder = '#fecaca'
+    } else if (costIncreasePercent >= 10) {
+      // Triggers if labor cost inflates the configuration base cost by >= 10%
+      statusText = '⚠️ High Cost Risk'
+      statusBg = '#ffedd5'
+      statusColor = '#9a3412'
+      statusBorder = '#fed7aa'
+    }
 
     return {
       ...alt,
       adjustedCost,
-      isFeasible
+      costIncreasePercent: costIncreasePercent.toFixed(1),
+      statusText,
+      statusBg,
+      statusColor,
+      statusBorder
     }
   })
 })
