@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from './supabase'
 
+import SensitivityAnalysis from './SensitivityAnalysis.vue'
+
+
 const form = ref({
   budget: 1500000,
   labor: 15,
@@ -950,6 +953,16 @@ const resetForm = () => {
               </div>
             </div>
           </div>
+<template>
+  <div class="min-h-screen bg-gray-100 p-8">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <!-- Your existing dashboard components / content -->
+      
+      <!-- Sensitivity Analysis placed at the bottom -->
+      <SensitivityAnalysis />
+    </div>
+  </div>
+</template>
 
         </div>
 
