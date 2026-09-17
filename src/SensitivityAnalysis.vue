@@ -20,7 +20,7 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-      <!-- Slider 1: Demand Fluctuation -->
+      <!-- Slider 1: Market Demand Fluctuation with Alternative Capacity Limits -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
@@ -30,10 +30,13 @@
           </span>
         </div>
         <input type="range" min="-50" max="1000" step="10" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b; font-weight: 600; flex-wrap: wrap; gap: 2px;">
           <span>-50%</span>
-          <span>Base (5k Units)</span>
-          <span>+1000% (55k Units)</span>
+          <span style="color: #0284c7;">5k (A1)</span>
+          <span style="color: #0284c7;">15k (A3)</span>
+          <span style="color: #0284c7;">30k (A2)</span>
+          <span style="color: #0284c7;">45k (A4)</span>
+          <span>+1000%</span>
         </div>
       </div>
 
@@ -120,13 +123,11 @@ const evaluatedAlternatives = computed(() => {
       statusColor = '#991b1b'
       statusBorder = '#fecaca'
     } else if (costIncreasePercent >= 20) {
-      // Critical Limit (> 20% cost overrun)
       statusText = '🚨 Critical Cost Overrun'
       statusBg = '#fee2e2'
       statusColor = '#b91c1c'
       statusBorder = '#fecaca'
     } else if (costIncreasePercent >= 10) {
-      // Warning Limit (10% - 20% cost risk)
       statusText = '⚠️ High Cost Risk'
       statusBg = '#ffedd5'
       statusColor = '#9a3412'
