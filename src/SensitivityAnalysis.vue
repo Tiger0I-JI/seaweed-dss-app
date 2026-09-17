@@ -20,7 +20,7 @@
     <!-- Sliders for Risk Parameters -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
       
-      <!-- Slider 1: Demand Fluctuation -->
+           <!-- Slider 1: Demand Fluctuation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Market Demand Fluctuation</label>
@@ -28,13 +28,15 @@
             {{ demandFactor > 0 ? '+' : '' }}{{ demandFactor }}%
           </span>
         </div>
-        <input type="range" min="-50" max="100" step="5" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
+        <!-- Changed max="100" to max="800" and step to "10" -->
+        <input type="range" min="-50" max="800" step="10" v-model.number="demandFactor" style="width: 100%; cursor: pointer;" />
         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: 500;">
           <span>-50% (Slowdown)</span>
           <span>Base (0%)</span>
-          <span>+100% (Surge)</span>
+          <span>+800% (Extreme Surge)</span>
         </div>
       </div>
+
 
       <!-- Slider 2: Labor Cost Variation -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
